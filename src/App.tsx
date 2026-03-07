@@ -205,6 +205,12 @@ const mkClient = o => ({
   adminNotes:"",
   welcomeMessage:"",
   mediaPlaybook:{ sections:[] },
+  productionPipeline:[],
+  asyncMode:false,
+  lastSessionDate:"",
+  coachingDrafts:[],
+  sessionNotes:[],
+  writingAssignments:[],
   ...o,
 });
 
@@ -214,6 +220,8 @@ const DEFAULT_USERS = [
   { username:"james.walker", password:"portal123", role:"client", clientId:"c2" },
   { username:"elena.russo", password:"portal123", role:"client", clientId:"c3" },
   { username:"david.park", password:"portal123", role:"client", clientId:"c4" },
+  { username:"marcus.bell", password:"portal123", role:"client", clientId:"c5" },
+  { username:"lisa.fontaine", password:"portal123", role:"client", clientId:"c6" },
 ];
 
 const DEFAULT_CLIENTS = [
@@ -311,17 +319,111 @@ const DEFAULT_CLIENTS = [
     brandVoice:{ toneWords:["Warm","Expert","Inviting","Grounded"],avoidWords:[],approvedTopics:["Hospitality","Guest Experience","Leadership"],guidelines:"Elena's voice reflects decades of experience — warm but authoritative.",examplePosts:[],toneProfile:{ formalCasual:55,boldMeasured:45,personalProfessional:60 },exploreIdeas:[],whiteSpaceCache:null },
   }),
   mkClient({ id:"c4", name:"David Park", username:"david.park", tier:"ghostwriting", joinDate:"2026-01-08",
+    lastSessionDate:"2026-03-01",
     chapters:[
-      { id:"ch1",title:"Prologue: The Problem with Perfect",status:"Final",notes:"Beautifully written. This is the hook.",dueDate:"2026-01-20" },
-      { id:"ch2",title:"Chapter 1: Unlearning Success",status:"Final",notes:"Strong argument.",dueDate:"2026-01-28" },
-      { id:"ch3",title:"Chapter 2: The Architecture of Failure",status:"Revision",notes:"Section 3 needs tightening.",dueDate:"2026-02-10" },
-      { id:"ch4",title:"Chapter 3: When Systems Break People",status:"Draft",notes:"First draft strong. Awaiting your notes.",dueDate:"2026-03-05" },
-      { id:"ch5",title:"Chapter 4: The Recovery Blueprint",status:"Outline",notes:"Outline approved.",dueDate:"2026-03-22" },
+      { id:"ch1",title:"Prologue: The Problem with Perfect",status:"Final",notes:"Beautifully written. This sets the hook with precision — nothing to change.",dueDate:"2026-01-20" },
+      { id:"ch2",title:"Chapter 1: Unlearning Success",status:"Final",notes:"Strong structural argument. The anecdote about McKinsey earns its place.",dueDate:"2026-01-28" },
+      { id:"ch3",title:"Chapter 2: The Architecture of Failure",status:"Final",notes:"Section 3 tightened on revision. Now reads exactly as intended.",dueDate:"2026-02-10" },
+      { id:"ch4",title:"Chapter 3: When Systems Break People",status:"Revision",notes:"The core argument is strong. Needs one more pass on the transition into the case study — currently loses momentum mid-page.",dueDate:"2026-03-05" },
+      { id:"ch5",title:"Chapter 4: The Recovery Blueprint",status:"Draft",notes:"First draft received. Good bones — waiting on your notes before we revise.",dueDate:"2026-03-22" },
+      { id:"ch6",title:"Chapter 5: Leading Without a Map",status:"Outline",notes:"Outline approved. Ready to draft once Ch. 4 is locked.",dueDate:"2026-04-05" },
+      { id:"ch7",title:"Chapter 6: What Rebuilding Actually Looks Like",status:"Outline",notes:"Key story identified: the Chicago turnaround. Build the chapter around that.",dueDate:"2026-04-20" },
+      { id:"ch8",title:"Epilogue: The Ongoing Work",status:"Outline",notes:"Short, personal. Write this last — after you know how the book ends.",dueDate:"2026-05-01" },
     ],
-    estimatedCompletion:"May 2024",
-    manuscriptNotes:"Overall trajectory is excellent. Your voice is compelling and distinctive.",
-    meetings:[{ id:"mt1",title:"Chapter 3 Review Call",date:"2026-03-15",time:"11:00 AM",description:"Walk through Chapter 3 draft together.",messages:[] }],
-    brandVoice:{ toneWords:[],avoidWords:[],approvedTopics:[],guidelines:"",examplePosts:[],toneProfile:{ formalCasual:50,boldMeasured:50,personalProfessional:50 },exploreIdeas:[],whiteSpaceCache:null },
+    estimatedCompletion:"June 2026",
+    manuscriptNotes:"We're past the halfway point and the voice is doing exactly what we hoped. The book has a through-line now that wasn't visible at the start. The revision work on Chapter 3 paid off — it's become the emotional center of the whole manuscript.",
+    meetings:[
+      { id:"mt1",title:"Chapter 3 Revision Review",date:"2026-03-01",time:"11:00 AM",description:"Walked through the Ch. 3 revisions. Final pass approved. Moved to Ch. 4 discussion.",agenda:"Review Ch. 3 changes · Assess Ch. 4 first draft · Set Ch. 5 outline plan",messages:[
+        { id:"msg1",from:"david.park",text:"I've sent the revised Ch. 3 — made the changes we discussed on the transition. Let me know if it reads better now.",ts:"2026-02-28T09:00:00Z" },
+        { id:"msg2",from:"mikaela",text:"Just read it — yes, that's the chapter now. The transition lands cleanly. See you Saturday.",ts:"2026-02-28T11:30:00Z" },
+      ]},
+      { id:"mt2",title:"Chapter 4 Draft Review",date:"2026-03-22",time:"2:00 PM",description:"Deep dive into the Recovery Blueprint draft. This is a pivotal chapter.",agenda:"Read Ch. 4 draft together · Identify structural gaps · Draft revision brief",messages:[] },
+    ],
+    productionPipeline:[
+      { id:"pp1",title:"Manuscript Kickoff Call",type:"Meeting",status:"Complete",date:"2026-01-10",notes:"Established voice, structure, and chapter arc. Locked the prologue approach.",order:0 },
+      { id:"pp2",title:"Prologue & Ch. 1 Complete",type:"Milestone",status:"Complete",date:"2026-01-30",notes:"First two pieces finalized ahead of schedule.",order:1 },
+      { id:"pp3",title:"Ch. 2 & 3 Draft Review",type:"Chapter Review",status:"Complete",date:"2026-02-15",notes:"Both chapters through revision. Ch. 3 needed extra pass on transitions.",order:2 },
+      { id:"pp4",title:"Author Photo Session",type:"Interview",status:"Complete",date:"2026-02-20",notes:"Coordinated with studio. 4 selects delivered.",order:3 },
+      { id:"pp5",title:"Midpoint Manuscript Review",type:"Meeting",status:"Complete",date:"2026-03-01",notes:"Confirmed voice direction for back half. Strong momentum.",order:4 },
+      { id:"pp6",title:"Cover Concept Presentation",type:"Cover Design",status:"In Progress",date:"2026-03-18",notes:"Designer delivering 3 concepts. Review with David before selecting direction.",order:5 },
+      { id:"pp7",title:"Publisher Outreach — Penguin Portfolio",type:"Partner Outreach",status:"In Progress",date:"2026-03-25",notes:"Sending proposal to editor contact at Penguin. Intro email drafted.",order:6 },
+      { id:"pp8",title:"Publisher Outreach — HarperCollins Leadership",type:"Partner Outreach",status:"Not Started",date:"2026-04-01",notes:"Secondary target. Strong fit for the leadership angle.",order:7 },
+      { id:"pp9",title:"Ch. 4–5 Final Review Session",type:"Chapter Review",status:"Not Started",date:"2026-04-15",notes:"",order:8 },
+      { id:"pp10",title:"Blurb Outreach — 3 Target Voices",type:"Partner Outreach",status:"Not Started",date:"2026-04-20",notes:"Identified: Adam Grant (reached out via mutual), Liz Wiseman, Kim Scott. Draft request letters ready.",order:9 },
+      { id:"pp11",title:"Publisher Response Window",type:"Partner Response",status:"Not Started",date:"2026-05-01",notes:"Estimated first responses from publisher outreach.",order:10 },
+      { id:"pp12",title:"Manuscript Complete",type:"Milestone",status:"Not Started",date:"2026-06-01",notes:"Target: all 8 chapters finalized and approved.",order:11 },
+    ],
+    directMessages:[
+      { id:"dm1",from:"mikaela",text:"David — Chapter 3 is now exactly where it needs to be. The revised transition into the case study is seamless. Marking it Final. Sending you Ch. 4 notes this afternoon.",ts:"2026-03-01T15:00:00Z" },
+      { id:"dm2",from:"david.park",text:"That's a relief. I wasn't sure about that section. Cover concepts — are we still on track for next week?",ts:"2026-03-02T09:15:00Z" },
+      { id:"dm3",from:"mikaela",text:"Yes — designer confirmed for the 18th. Three directions. I'll walk you through them before we commit to anything.",ts:"2026-03-02T10:00:00Z" },
+    ],
+    brandVoice:{ toneWords:["Grounded","Direct","Honest","Unflinching"],avoidWords:["Guru","Transformational","Game-changer"],approvedTopics:["Leadership","Organizational failure","Resilience","Systems thinking"],guidelines:"David's voice is that of someone who has been through the failure he's describing — not theorizing from the outside. The book should read like a conversation with a trusted peer who has earned the right to speak plainly.",examplePosts:[],toneProfile:{ formalCasual:35,boldMeasured:70,personalProfessional:50 },exploreIdeas:[],whiteSpaceCache:null },
+    welcomeMessage:"David — we're past the halfway mark and I want to say clearly: this book is working. What started as a story about failure has become something more precise and more useful than that. Keep writing. The back half is going to be the best half.",
+    adminNotes:"Responds best to direct written feedback. Prefers not to over-discuss — send notes in advance, review together on call. Very deadline-responsive. The Chicago turnaround story (Ch. 6) is the book's secret weapon — remind him to go deep on it. Publisher interest: scout at Penguin reached out via LinkedIn after seeing the proposal summary.",
+  }),
+  mkClient({ id:"c5", name:"Marcus Bell", username:"marcus.bell", tier:"ghostwriting", joinDate:"2026-02-20",
+    lastSessionDate:"2026-03-03",
+    chapters:[],
+    estimatedCompletion:"February 2027",
+    manuscriptNotes:"Project is in the launch phase. Book structure confirmed, voice interviews complete, chapter outline in progress.",
+    meetings:[
+      { id:"mt1",title:"Project Kickoff",date:"2026-02-24",time:"10:00 AM",description:"First full session. Established premise, audience, and initial arc.",agenda:"Confirm book premise · Audience definition · Structural approach · Next steps",messages:[
+        { id:"msg1",from:"mikaela",text:"Marcus — great first session. The premise is sharp. I'll have the initial outline draft to you by Thursday.",ts:"2026-02-24T12:00:00Z" },
+      ]},
+      { id:"mt2",title:"Outline Review & Chapter Arc",date:"2026-03-10",time:"11:00 AM",description:"Review the proposed chapter structure and lock the book arc.",agenda:"Walk through full outline · Confirm chapter sequence · Identify anchor stories",messages:[] },
+    ],
+    productionPipeline:[
+      { id:"pp1",title:"Project Kickoff",type:"Meeting",status:"Complete",date:"2026-02-24",notes:"Premise confirmed. Voice interviews scheduled.",order:0 },
+      { id:"pp2",title:"Voice & Vision Interview — Session 1",type:"Interview",status:"Complete",date:"2026-02-28",notes:"3 hours of recorded material. Core philosophy, formative stories, defining career moments captured.",order:1 },
+      { id:"pp3",title:"Voice & Vision Interview — Session 2",type:"Interview",status:"Complete",date:"2026-03-03",notes:"Focused on the 2019 turnaround and the Gulf Coast expansion. Strong narrative material.",order:2 },
+      { id:"pp4",title:"Outline Review & Chapter Arc Lock",type:"Meeting",status:"Not Started",date:"2026-03-10",notes:"Full outline delivered to Marcus on March 8.",order:3 },
+      { id:"pp5",title:"Prologue Draft",type:"Chapter Review",status:"Not Started",date:"2026-03-25",notes:"",order:4 },
+      { id:"pp6",title:"Chapters 1–3 Draft Phase",type:"Chapter Review",status:"Not Started",date:"2026-04-30",notes:"",order:5 },
+      { id:"pp7",title:"Cover Direction Discussion",type:"Cover Design",status:"Not Started",date:"2026-05-15",notes:"",order:6 },
+      { id:"pp8",title:"Early Publisher Outreach",type:"Partner Outreach",status:"Not Started",date:"2026-07-01",notes:"Identify 5 target editors. Marcus has a contact at Portfolio Books worth exploring.",order:7 },
+    ],
+    directMessages:[
+      { id:"dm1",from:"mikaela",text:"Marcus — the interview sessions were exceptional. You've given us more than enough material to build something genuinely important. Full outline is coming Thursday. This is going to be a real book.",ts:"2026-03-03T17:00:00Z" },
+      { id:"dm2",from:"marcus.bell",text:"I've been thinking about what you said about the Gulf Coast story. I think that's the spine of the whole second act.",ts:"2026-03-04T08:30:00Z" },
+    ],
+    brandVoice:{ toneWords:["Pragmatic","Confident","Accessible","Specific"],avoidWords:["Thought leader","Empower","Journey"],approvedTopics:["Business turnaround","Operational leadership","Risk","Decision-making under pressure"],guidelines:"Marcus built something real in difficult conditions. The voice should reflect that — grounded authority, no abstraction, every claim earns its place with a specific example.",examplePosts:[],toneProfile:{ formalCasual:40,boldMeasured:75,personalProfessional:45 },exploreIdeas:[],whiteSpaceCache:null },
+    welcomeMessage:"Marcus — the material you brought to those interview sessions is exactly what a book like this needs. You've lived the story. Now we write it.",
+    adminNotes:"Fast decision-maker, responds to brevity. Wants to be consulted on structure but trust the writing. The Gulf Coast expansion (2021–23) is the most commercially interesting story — it has scale, risk, and a clear lesson. Portfolio Books contact: ask Marcus to make the intro when we have a proposal draft.",
+  }),
+  mkClient({ id:"c6", name:"Lisa Fontaine", username:"lisa.fontaine", tier:"coaching", joinDate:"2026-01-20",
+    lastSessionDate:"2026-03-04",
+    chapters:[
+      { id:"ch1",title:"Chapter 1: The Medicine Nobody Talks About",status:"Revision",notes:"Strong premise, overwritten in places. See draft feedback. The list on page 4 should be prose.",dueDate:"2026-03-10" },
+      { id:"ch2",title:"Chapter 2: What Patients Actually Want",status:"Draft",notes:"First draft submitted. Feedback in progress.",dueDate:"2026-03-25" },
+      { id:"ch3",title:"Chapter 3: The Conversation Gap",status:"Outline",notes:"Outline strong. This chapter needs one anchor patient story — do you have one?",dueDate:"2026-04-08" },
+    ],
+    estimatedCompletion:"August 2026",
+    manuscriptNotes:"Lisa is writing a book for medical professionals on patient-centered communication. The voice is finding itself — early chapters read academic, but recent work is warming up. Keep pushing toward specificity over theory.",
+    coachingDrafts:[
+      { id:"cd1",title:"Chapter 1 — First Draft",submittedAt:"2026-02-10T14:00:00Z",submittedBy:"lisa.fontaine",fileName:"Ch1_FirstDraft.docx",fileSize:"48KB",mikaelaNotes:"This is a genuinely important premise and you've led with the right story. The opening anecdote about the waiting room works. \n\nHere's where I want you to push further:\n\n1. Page 3–4: The numbered list kills the momentum. Trust your instincts — you write better in paragraphs. Rewrite this section in flowing prose and see how it changes the rhythm.\n\n2. The phrase 'evidence-based communication framework' appears four times. Once is enough, and even then — your readers are clinicians, not grant reviewers. Write like you're talking to a colleague.\n\n3. The ending is too neat. The problem you've named in this chapter doesn't resolve in Chapter 1. Let it sit unresolved — that's what makes the reader want Chapter 2.",notesAddedAt:"2026-02-14T10:00:00Z",status:"Feedback Delivered" },
+      { id:"cd2",title:"Chapter 1 — Revised Draft",submittedAt:"2026-02-28T16:00:00Z",submittedBy:"lisa.fontaine",fileName:"Ch1_Revised.docx",fileSize:"51KB",mikaelaNotes:"This is a different chapter now — and a better one. The list-to-prose change is exactly right. The ending is now honest in a way the first draft wasn't.\n\nTwo small things: the transition into section 2 is still a little abrupt — add one sentence of connective tissue. And I'd cut the footnote on page 6 entirely; it reads defensive.\n\nOtherwise: ready to mark Final on your signal.",notesAddedAt:"2026-03-04T09:00:00Z",status:"Feedback Delivered" },
+      { id:"cd3",title:"Chapter 2 — First Draft",submittedAt:"2026-03-05T11:00:00Z",submittedBy:"lisa.fontaine",fileName:"Ch2_Draft.docx",fileSize:"44KB",mikaelaNotes:"",notesAddedAt:"",status:"Awaiting Feedback" },
+    ],
+    sessionNotes:[
+      { id:"sn1",date:"2026-01-28",title:"Session 1 — Book Architecture",content:"Spent 90 minutes mapping the full book structure. Lisa came in with a rough 10-chapter outline that was more academic paper than book. We restructured around reader experience rather than topic sequence.\n\nKey decisions:\n— Open with a patient story, not a statistics page\n— Target audience is attending physicians and NPs, not medical students\n— The book's argument: good communication is clinical skill, not bedside manner\n\nHomework: Write the opening scene of Ch. 1 without referencing any research. Just the story." },
+      { id:"sn2",date:"2026-02-18",title:"Session 2 — Draft Review & Voice Work",content:"Read Ch. 1 first draft together. Clear that Lisa's natural voice is warmer than her written voice. She talks about patients with specificity and care; the draft was formal and distancing.\n\nWe did a 20-minute exercise: she spoke about a specific patient case, I transcribed. The resulting paragraphs were markedly better than what she'd written. Assignment: revise the list section using that transcript as a model.\n\nGeneral note: Lisa is a strong thinker and a careful writer. The coaching challenge is not ability — it's permission. She has internalized academic writing norms that are actively working against her. The work is unlearning." },
+      { id:"sn3",date:"2026-03-04",title:"Session 3 — Ch. 1 Final + Ch. 2 Check-In",content:"Ch. 1 revised draft reviewed — ready to mark Final pending two small edits. Good momentum.\n\nCh. 2 draft submitted this week. Haven't read it yet but Lisa reports she found it harder to write than Ch. 1 — which usually means it's more honest. Will send detailed notes by end of week.\n\nDiscussed the Chapter 3 anchor story problem. She has a patient she's been thinking about — a case from 2019 that changed how she thinks about consent conversations. Told her to write it down in whatever form it comes, no pressure to make it chapter-ready. Just get it on the page." },
+    ],
+    writingAssignments:[
+      { id:"wa1",title:"Opening scene — no research allowed",description:"Write the first 300–500 words of Chapter 1 using only a patient story. No statistics, no citations, no framework language. Just what happened and what it meant.",dueDate:"2026-02-03",status:"Complete",completedAt:"2026-02-01",completionNotes:"Did it — it was uncomfortable to write without the scaffolding but I think it's better. Attached in the Ch. 1 draft." },
+      { id:"wa2",title:"Prose rewrite of the Ch. 1 list section",description:"Take the numbered list on pages 3–4 and rewrite it as 2–3 paragraphs. Use the transcript from our voice exercise as a model for rhythm. The goal is continuity of thought, not a structured list.",dueDate:"2026-02-25",status:"Complete",completedAt:"2026-02-27",completionNotes:"Took three attempts but I think I got it. The second version felt right — used it in the revised draft." },
+      { id:"wa3",title:"Write the 2019 patient story (raw draft)",description:"The consent case from 2019 that you mentioned in our session. Write it down in whatever form comes naturally — journal entry, narrative, clinical description, whatever. This isn't for the book yet. Just get it out of your head and onto the page. 200–1000 words, no rules.",dueDate:"2026-03-18",status:"In Progress",completedAt:"",completionNotes:"" },
+      { id:"wa4",title:"Chapter 3 outline — anchor story first",description:"Before outlining Chapter 3 conceptually, write a 1-paragraph summary of the patient story you'll build it around. What happened? Why does it matter? What does it teach the reader? Then build the outline around that story, not the other way around.",dueDate:"2026-04-01",status:"Not Started",completedAt:"",completionNotes:"" },
+    ],
+    meetings:[
+      { id:"mt1",title:"Session 3 — Ch. 1 Final Review",date:"2026-03-04",time:"10:00 AM",description:"Reviewed revised Ch. 1, checked in on Ch. 2, discussed Ch. 3 anchor story.",messages:[] },
+      { id:"mt2",title:"Session 4 — Ch. 2 Feedback Review",date:"2026-03-25",time:"10:00 AM",description:"Walk through Mikaela's notes on the Ch. 2 draft. Set Ch. 3 outline direction.",messages:[] },
+    ],
+    brandVoice:{ toneWords:["Clear","Warm","Evidence-informed","Specific"],avoidWords:["Paradigm shift","Framework","Best practices","Stakeholders"],approvedTopics:["Patient communication","Clinical empathy","Medical education","Healthcare systems"],guidelines:"Lisa writes for clinicians who are tired of being told what they should do. The tone must be collegial — peer to peer, not expert to student. Every abstract claim needs a clinical story behind it.",examplePosts:[],toneProfile:{ formalCasual:52,boldMeasured:55,personalProfessional:58 },exploreIdeas:[],whiteSpaceCache:null },
+    welcomeMessage:"Lisa — the work you're doing here matters. This book will change how physicians talk to patients, and that changes outcomes. That's not a small thing. Keep writing.",
+    adminNotes:"Medical professional — busy schedule, very time-conscious. Prefers async feedback (ASYNC MODE ON). Strong intellectual, occasional imposter syndrome around 'being a writer.' Keep reinforcing: this isn't a different skill, it's the same skill she uses in patient communication. The 2019 case is the emotional anchor for the whole book — when she writes it, the rest of the manuscript will follow.",
+    asyncMode: true,
   }),
 ];
 
@@ -669,6 +771,17 @@ function HomeView({ client, session, onUpdate, newSince, onNavigate }) {
   const recentWins=[...client.publicationLog].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,3);
   const nextMeeting=[...(client.meetings||[])].filter(m=>m.date>=todayStr()).sort((a,b)=>a.date.localeCompare(b.date))[0];
   const hasNewItems=newSince.content>0||newSince.docs>0||newSince.messages>0;
+  const manuscript=isManuscript(client.tier);
+
+  // Project stats for manuscript clients
+  const chapters=client.chapters||[];
+  const totalCh=chapters.length;
+  const finalCh=chapters.filter(c=>c.status==="Final").length;
+  const revCh=chapters.filter(c=>c.status==="Revision").length;
+  const draftCh=chapters.filter(c=>c.status==="Draft").length;
+  const pct=totalCh>0?Math.round(((finalCh+revCh*0.7+draftCh*0.3)/totalCh)*100):0;
+  const daysSinceSession=client.lastSessionDate?Math.floor((new Date()-new Date(client.lastSessionDate+"T12:00:00"))/(1000*60*60*24)):null;
+
   return (
     <div className="ks-up">
       {/* Welcome message */}
@@ -703,8 +816,27 @@ function HomeView({ client, session, onUpdate, newSince, onNavigate }) {
           </div>
         </div>
       )}
-      {/* Next meeting */}
-      {nextMeeting&&(
+
+      {/* MANUSCRIPT: Project Stats Block */}
+      {manuscript&&totalCh>0&&(
+        <div style={{ marginBottom:32 }}>
+          <Label>Project Stats</Label>
+          <div style={{ padding:"22px 26px",background:C.surface,border:`1px solid ${C.goldBorder}` }}>
+            <div style={{ display:"flex",gap:24,flexWrap:"wrap",marginBottom:18 }}>
+              <Stat label="Chapters Done" value={finalCh}/>
+              <Stat label="Total Chapters" value={totalCh}/>
+              <Stat label="Complete" value={`${pct}%`}/>
+              {client.estimatedCompletion&&<Stat label="Est. Finish" value={client.estimatedCompletion}/>}
+              {daysSinceSession!==null&&<Stat label="Days Since Session" value={daysSinceSession===0?"Today":daysSinceSession}/>}
+            </div>
+            <ProgressBar value={pct} trajectory={pct>60?"ahead":"on-track"}/>
+            {client.manuscriptNotes&&<div style={{ marginTop:16,fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:16,color:C.dim,lineHeight:1.7,borderTop:`1px solid rgba(255,255,255,0.06)`,paddingTop:14 }}>"{client.manuscriptNotes}"</div>}
+          </div>
+        </div>
+      )}
+
+      {/* Next meeting — suppressed in async mode */}
+      {nextMeeting&&!client.asyncMode&&(
         <div style={{ marginBottom:32 }}>
           <Label>Next Meeting</Label>
           <div onClick={()=>onNavigate("calendar")} style={{ padding:"16px 20px",background:C.surface,border:`1px solid ${C.goldBorder}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",gap:16 }}>
@@ -717,9 +849,20 @@ function HomeView({ client, session, onUpdate, newSince, onNavigate }) {
           </div>
         </div>
       )}
+      {/* Async mode notice */}
+      {client.asyncMode&&(
+        <div style={{ marginBottom:28,padding:"14px 18px",background:"rgba(201,168,76,0.04)",border:`1px solid rgba(201,168,76,0.18)`,display:"flex",alignItems:"center",gap:12 }}>
+          <span style={{ color:C.gold,fontSize:14 }}>◉</span>
+          <div>
+            <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",color:C.gold,marginBottom:3 }}>Async Mode</div>
+            <div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted }}>Mikaela will reach out with feedback and updates via messages. <button onClick={()=>onNavigate("preferences")} style={{ background:"none",border:"none",color:C.gold,cursor:"pointer",fontFamily:"'Lato',sans-serif",fontSize:12,padding:0,textDecoration:"underline" }}>Change in Preferences →</button></div>
+          </div>
+        </div>
+      )}
+
       <GoldRule/>
-      {/* Recent wins */}
-      {recentWins.length>0&&(
+      {/* Recent wins — branding tiers only */}
+      {recentWins.length>0&&!manuscript&&(
         <div style={{ marginTop:28 }}>
           <Label>Recent Wins</Label>
           {recentWins.map(p=>(
@@ -1521,6 +1664,381 @@ function ManuscriptView({ client }) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// PIPELINE CONSTANTS
+// ─────────────────────────────────────────────────────────────
+const PIPELINE_BLOCK_TYPES = ["Meeting","Chapter Review","Cover Design","Interview","Milestone","Partner Outreach","Partner Response","Question / Revision","Other"];
+const PIPELINE_STATUSES_LIST = ["Not Started","In Progress","Complete"];
+
+const pipelineTypeIcon = t => ({ "Meeting":"◷","Chapter Review":"◎","Cover Design":"◈","Interview":"◇","Milestone":"◆","Partner Outreach":"→","Partner Response":"←","Question / Revision":"✦","Other":"·" }[t]||"·");
+const pipelineTypeColor = t => ({ "Meeting":"#7a9aaf","Chapter Review":C.gold,"Cover Design":"#9a8aaf","Interview":"#82d082","Milestone":"#e2c47a","Partner Outreach":"#c9a84c","Partner Response":"#82d082","Question / Revision":"#c97a4a","Other":C.muted }[t]||C.muted);
+const pipelineStatusIcon = s => s==="Complete"?"●":s==="In Progress"?"◑":"○";
+const pipelineStatusColor = s => s==="Complete"?C.gold:s==="In Progress"?"#82d082":"rgba(255,255,255,0.3)";
+
+// ─────────────────────────────────────────────────────────────
+// BOOK PRODUCTION PIPELINE VIEW
+// ─────────────────────────────────────────────────────────────
+function BookPipelineView({ client, isAdmin, onUpdate }) {
+  const pipeline = [...(client.productionPipeline||[])].sort((a,b)=>(a.order??999)-(b.order??999));
+  const [editBlock, setEditBlock] = useState(null);
+  const [dragIdx, setDragIdx] = useState(null);
+  const [dragOverIdx, setDragOverIdx] = useState(null);
+
+  const updateBlock = (id,patch) => onUpdate({...client,productionPipeline:(client.productionPipeline||[]).map(b=>b.id===id?{...b,...patch}:b)});
+  const deleteBlock = id => onUpdate({...client,productionPipeline:(client.productionPipeline||[]).filter(b=>b.id!==id)});
+  const cycleStatus = (id,cur) => { const idx=PIPELINE_STATUSES_LIST.indexOf(cur); updateBlock(id,{status:PIPELINE_STATUSES_LIST[(idx+1)%3]}); };
+
+  const handleDrop = () => {
+    if(dragIdx===null||dragOverIdx===null||dragIdx===dragOverIdx) { setDragIdx(null);setDragOverIdx(null);return; }
+    const arr = [...pipeline];
+    const [moved] = arr.splice(dragIdx,1);
+    arr.splice(dragOverIdx,0,moved);
+    onUpdate({...client,productionPipeline:arr.map((b,i)=>({...b,order:i}))});
+    setDragIdx(null); setDragOverIdx(null);
+  };
+
+  const complete = pipeline.filter(b=>b.status==="Complete").length;
+  const total = pipeline.length;
+
+  return (
+    <div className="ks-up">
+      <SectionHeading sub="Your book's journey from first session to published manuscript">Book Production Pipeline</SectionHeading>
+      {isAdmin&&<div style={{ display:"flex",justifyContent:"flex-end",marginBottom:20 }}><button className="btn-ghost" onClick={()=>setEditBlock({})}>+ Add Block</button></div>}
+
+      {total>0&&(
+        <div style={{ display:"flex",alignItems:"center",gap:16,marginBottom:24,padding:"14px 20px",background:"rgba(201,168,76,0.04)",border:`1px solid ${C.goldBorder}` }}>
+          <div style={{ flex:1 }}>
+            <div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.muted,marginBottom:7 }}>Pipeline Progress</div>
+            <ProgressBar value={total>0?Math.round((complete/total)*100):0} trajectory="on-track"/>
+          </div>
+          <div style={{ fontFamily:"'Playfair Display',serif",fontSize:22,color:C.gold,flexShrink:0 }}>{complete}/{total}</div>
+        </div>
+      )}
+
+      {pipeline.length===0?<EmptyState message="Your production pipeline will be built here by Mikaela." icon="◈"/>:(
+        <div style={{ position:"relative",paddingLeft:32 }}>
+          {/* Vertical connector */}
+          <div style={{ position:"absolute",left:10,top:20,bottom:20,width:1,background:`linear-gradient(180deg,transparent,rgba(201,168,76,0.3) 10%,rgba(201,168,76,0.3) 90%,transparent)` }}/>
+          {pipeline.map((block,idx)=>{
+            const tc = pipelineTypeColor(block.type);
+            const sc = pipelineStatusColor(block.status);
+            const isDragOver = dragOverIdx===idx;
+            return (
+              <div key={block.id}
+                draggable={isAdmin}
+                onDragStart={()=>setDragIdx(idx)}
+                onDragOver={e=>{e.preventDefault();setDragOverIdx(idx);}}
+                onDragLeave={()=>setDragOverIdx(null)}
+                onDrop={handleDrop}
+                style={{ position:"relative",marginBottom:12,opacity:dragIdx===idx?0.4:1,transition:"opacity 0.15s",borderTop:isDragOver?`2px solid ${C.gold}`:"2px solid transparent" }}>
+                {/* Timeline dot */}
+                <div style={{ position:"absolute",left:-27,top:16,width:12,height:12,borderRadius:"50%",background:sc,border:`2px solid ${C.bg}`,boxShadow:`0 0 0 2px ${sc}44`,zIndex:1 }}/>
+                <div style={{ padding:"14px 18px",background:C.surface,border:`1px solid rgba(255,255,255,0.07)`,transition:"border-color 0.2s",borderLeft:`3px solid ${tc}44` }}
+                  onMouseEnter={e=>e.currentTarget.style.borderColor="rgba(201,168,76,0.18)"}
+                  onMouseLeave={e=>e.currentTarget.style.borderColor="rgba(255,255,255,0.07)"}>
+                  <div style={{ display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12 }}>
+                    <div style={{ flex:1 }}>
+                      <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:5 }}>
+                        <span style={{ color:tc,fontSize:11,fontWeight:700 }}>{pipelineTypeIcon(block.type)}</span>
+                        <span style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:tc }}>{block.type}</span>
+                        {block.date&&<span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted }}>{fmtDate(block.date)}</span>}
+                      </div>
+                      <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:18,color:C.text,marginBottom:block.notes?6:0 }}>{block.title}</div>
+                      {block.notes&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.dim,fontStyle:"italic",lineHeight:1.55 }}>{block.notes}</div>}
+                    </div>
+                    <div style={{ display:"flex",alignItems:"center",gap:8,flexShrink:0 }}>
+                      {isAdmin?(
+                        <button onClick={()=>cycleStatus(block.id,block.status)} style={{ background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:5,padding:"4px 8px",borderRadius:2,transition:"background 0.15s" }}
+                          onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.05)"}
+                          onMouseLeave={e=>e.currentTarget.style.background="none"}>
+                          <span style={{ color:sc,fontSize:14 }}>{pipelineStatusIcon(block.status)}</span>
+                          <span style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:sc }}>{block.status}</span>
+                        </button>
+                      ):(
+                        <div style={{ display:"flex",alignItems:"center",gap:5 }}>
+                          <span style={{ color:sc,fontSize:14 }}>{pipelineStatusIcon(block.status)}</span>
+                          <span style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:sc }}>{block.status}</span>
+                        </div>
+                      )}
+                      {isAdmin&&<>
+                        <button className="btn-sm" onClick={()=>setEditBlock(block)}>Edit</button>
+                        <button className="btn-del" onClick={()=>deleteBlock(block.id)}>Del</button>
+                        <span style={{ color:C.muted,fontSize:11,cursor:"grab" }} title="Drag to reorder">⠿</span>
+                      </>}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {editBlock!==null&&<PipelineBlockModal entry={Object.keys(editBlock).length?editBlock:null} onClose={()=>setEditBlock(null)} onSave={b=>{
+        if(b.id) { updateBlock(b.id,b); } else { onUpdate({...client,productionPipeline:[...(client.productionPipeline||[]),{...b,id:uid(),order:(client.productionPipeline||[]).length}]}); }
+        setEditBlock(null);
+      }}/>}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// BOOK COACHING VIEW
+// ─────────────────────────────────────────────────────────────
+function BookCoachingView({ client, isAdmin, session, onUpdate }) {
+  const [tab,setTab] = useState("drafts");
+  const drafts = client.coachingDrafts||[];
+  const notes = client.sessionNotes||[];
+  const assignments = client.writingAssignments||[];
+  const [uploading,setUploading] = useState(false);
+  const [feedbackId,setFeedbackId] = useState(null);
+  const [feedbackText,setFeedbackText] = useState("");
+  const [editNote,setEditNote] = useState(null);
+  const [editAssignment,setEditAssignment] = useState(null);
+  const fileRef = useRef(null);
+
+  const pendingDrafts = drafts.filter(d=>!d.mikaelaNotes).length;
+  const pendingAssignments = assignments.filter(a=>a.status==="Not Started"||a.status==="In Progress").length;
+
+  const processFile = file => {
+    if(!file) return;
+    if(file.size>750000){ alert("File must be under 750KB. For larger files, use the Document Hub to share a Drive link."); return; }
+    setUploading(true);
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const draft = { id:uid(),title:file.name.replace(/\.[^.]+$/,""),submittedAt:new Date().toISOString(),submittedBy:session.username,fileName:file.name,fileSize:Math.round(file.size/1024)+"KB",fileData:ev.target.result,mikaelaNotes:"",notesAddedAt:"",status:"Awaiting Feedback" };
+      onUpdate({...client,coachingDrafts:[...drafts,draft]});
+      setUploading(false);
+    };
+    reader.onerror=()=>setUploading(false);
+    reader.readAsDataURL(file);
+  };
+
+  const submitFeedback = () => {
+    if(!feedbackText.trim()||!feedbackId) return;
+    onUpdate({...client,coachingDrafts:drafts.map(d=>d.id===feedbackId?{...d,mikaelaNotes:feedbackText,notesAddedAt:new Date().toISOString(),status:"Feedback Delivered"}:d)});
+    setFeedbackId(null); setFeedbackText("");
+  };
+
+  const saveNote = note => {
+    if(note.id) onUpdate({...client,sessionNotes:notes.map(n=>n.id===note.id?note:n)});
+    else onUpdate({...client,sessionNotes:[...notes,{...note,id:uid()}]});
+    setEditNote(null);
+  };
+
+  const deleteNote = id => onUpdate({...client,sessionNotes:notes.filter(n=>n.id!==id)});
+
+  const saveAssignment = a => {
+    if(a.id) onUpdate({...client,writingAssignments:assignments.map(x=>x.id===a.id?a:x)});
+    else onUpdate({...client,writingAssignments:[...assignments,{...a,id:uid()}]});
+    setEditAssignment(null);
+  };
+
+  const deleteAssignment = id => onUpdate({...client,writingAssignments:assignments.filter(a=>a.id!==id)});
+
+  const completeAssignment = (id, notes) => onUpdate({...client,writingAssignments:assignments.map(a=>a.id===id?{...a,status:"Complete",completedAt:todayStr(),completionNotes:notes||a.completionNotes}:a)});
+
+  const [completeModal,setCompleteModal] = useState(null);
+  const [completeNote,setCompleteNote] = useState("");
+
+  const tabs=[
+    {key:"drafts",label:"Submitted Drafts",badge:isAdmin&&pendingDrafts>0?pendingDrafts:null},
+    {key:"notes",label:"Session Notes"},
+    {key:"assignments",label:"Writing Assignments",badge:!isAdmin&&pendingAssignments>0?pendingAssignments:null},
+  ];
+
+  const aStatusColor = s => s==="Complete"?C.gold:s==="In Progress"?"#82d082":"rgba(255,255,255,0.4)";
+  const aStatusIcon = s => s==="Complete"?"●":s==="In Progress"?"◑":"○";
+
+  return (
+    <div className="ks-up">
+      <SectionHeading>Book Coaching</SectionHeading>
+      <div style={{ display:"flex",gap:0,borderBottom:`1px solid ${C.goldBorder}`,marginBottom:24,overflowX:"auto" }}>
+        {tabs.map(t=>(
+          <button key={t.key} onClick={()=>setTab(t.key)} style={{ background:"none",border:"none",borderBottom:tab===t.key?`2px solid ${C.gold}`:"2px solid transparent",color:tab===t.key?C.gold:C.muted,fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",padding:"10px 14px",cursor:"pointer",whiteSpace:"nowrap",marginBottom:-1,transition:"color 0.2s" }}>
+            {t.label}
+            {t.badge&&<span style={{ marginLeft:6,background:"rgba(201,168,76,0.2)",color:C.gold,fontSize:9,fontWeight:700,padding:"1px 5px",borderRadius:8 }}>{t.badge}</span>}
+          </button>
+        ))}
+      </div>
+
+      {/* SUBMITTED DRAFTS */}
+      {tab==="drafts"&&(
+        <div>
+          {!isAdmin&&(
+            <>
+              <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.dim,lineHeight:1.65,marginBottom:20 }}>Upload your chapter drafts here. Mikaela will review each one and add written feedback directly in this view.</div>
+              <div className="upload-zone" onClick={()=>fileRef.current?.click()} style={{ marginBottom:24 }}>
+                <input ref={fileRef} type="file" style={{ display:"none" }} onChange={e=>{processFile(e.target.files[0]);e.target.value="";}} disabled={uploading}/>
+                <div style={{ fontSize:22,marginBottom:8,opacity:0.5 }}>⬆</div>
+                <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.muted,marginBottom:4 }}>{uploading?"Uploading…":"Upload a draft"}</div>
+                <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:"rgba(255,255,255,0.3)" }}>Word, PDF, or text files up to 750KB</div>
+              </div>
+            </>
+          )}
+          {isAdmin&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted,fontStyle:"italic",marginBottom:20 }}>Click "Add Feedback" to write your response to each submitted draft. The client will see your notes below their submission.</div>}
+          {drafts.length===0?<EmptyState message="No drafts submitted yet." icon="◎"/>:(
+            [...drafts].sort((a,b)=>new Date(b.submittedAt)-new Date(a.submittedAt)).map(d=>(
+              <div key={d.id} style={{ marginBottom:20,padding:"18px 22px",background:C.surface,border:`1px solid ${C.goldBorder}` }}>
+                <div style={{ display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,marginBottom:12 }}>
+                  <div>
+                    <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:20,color:C.text,marginBottom:4 }}>{d.title}</div>
+                    <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted }}>
+                      📄 {d.fileName} · {d.fileSize} · Submitted {fmtDate(d.submittedAt?.split("T")[0])}
+                    </div>
+                  </div>
+                  <div style={{ display:"flex",gap:8,alignItems:"center",flexShrink:0 }}>
+                    <span style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",color:d.status==="Feedback Delivered"?C.gold:"rgba(255,255,255,0.4)" }}>
+                      {d.status==="Feedback Delivered"?"✓ Feedback Delivered":"◌ Awaiting Feedback"}
+                    </span>
+                    {d.fileData&&<button className="btn-sm" onClick={()=>{const a=document.createElement("a");a.href=d.fileData;a.download=d.fileName;a.click();}}>Download</button>}
+                    {isAdmin&&<button className="btn-del" onClick={()=>onUpdate({...client,coachingDrafts:drafts.filter(x=>x.id!==d.id)})}>Del</button>}
+                  </div>
+                </div>
+                {d.mikaelaNotes?(
+                  <div>
+                    <GoldRule my={12}/>
+                    <div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.gold,marginBottom:10 }}>Mikaela's Notes · {fmtDate(d.notesAddedAt?.split("T")[0])}</div>
+                    <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.dim,lineHeight:1.75,whiteSpace:"pre-wrap",padding:"16px 20px",background:"rgba(201,168,76,0.04)",border:`1px solid rgba(201,168,76,0.15)` }}>{d.mikaelaNotes}</div>
+                    {isAdmin&&<button className="btn-sm" style={{ marginTop:10 }} onClick={()=>{setFeedbackId(d.id);setFeedbackText(d.mikaelaNotes);}}>Edit Notes</button>}
+                  </div>
+                ):(
+                  isAdmin&&(feedbackId===d.id?(
+                    <div style={{ marginTop:12 }}>
+                      <GoldRule my={12}/>
+                      <FormRow label="Feedback Notes"><textarea className="ks-field" rows={8} value={feedbackText} onChange={e=>setFeedbackText(e.target.value)} placeholder="Write your feedback here. The client will see this below their draft."/></FormRow>
+                      <div style={{ display:"flex",gap:8 }}>
+                        <button className="btn-gold" onClick={submitFeedback} disabled={!feedbackText.trim()}>Save Feedback</button>
+                        <button className="btn-ghost" onClick={()=>{setFeedbackId(null);setFeedbackText("");}}>Cancel</button>
+                      </div>
+                    </div>
+                  ):(
+                    <button className="btn-ghost" style={{ marginTop:12,fontSize:10 }} onClick={()=>{setFeedbackId(d.id);setFeedbackText("");}}>+ Add Feedback</button>
+                  ))
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* SESSION NOTES */}
+      {tab==="notes"&&(
+        <div>
+          {isAdmin&&<div style={{ display:"flex",justifyContent:"flex-end",marginBottom:20 }}><button className="btn-ghost" onClick={()=>setEditNote({date:todayStr(),title:"",content:""})}>+ Add Session Note</button></div>}
+          {!isAdmin&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.dim,lineHeight:1.65,marginBottom:24 }}>Mikaela's notes from each coaching session — a running record of your progress, insights, and what to work on next.</div>}
+          {notes.length===0?<EmptyState message="Session notes will appear here after each coaching session." icon="◇"/>:(
+            [...notes].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(n=>(
+              <div key={n.id} style={{ marginBottom:20,padding:"20px 24px",background:C.surface,border:`1px solid ${C.goldBorder}` }}>
+                <div style={{ display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,marginBottom:12 }}>
+                  <div>
+                    <div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.gold,marginBottom:6 }}>{fmtDate(n.date)}</div>
+                    <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:20,color:C.text }}>{n.title}</div>
+                  </div>
+                  {isAdmin&&<div style={{ display:"flex",gap:6,flexShrink:0 }}>
+                    <button className="btn-sm" onClick={()=>setEditNote(n)}>Edit</button>
+                    <button className="btn-del" onClick={()=>deleteNote(n.id)}>Del</button>
+                  </div>}
+                </div>
+                <GoldRule my={12}/>
+                <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.dim,lineHeight:1.8,whiteSpace:"pre-wrap" }}>{n.content}</div>
+              </div>
+            ))
+          )}
+          {editNote!==null&&(
+            <Modal title={editNote.id?"Edit Session Note":"Add Session Note"} onClose={()=>setEditNote(null)} wide>
+              <FormRow label="Date"><input className="ks-field" type="date" value={editNote.date} onChange={e=>setEditNote(n=>({...n,date:e.target.value}))}/></FormRow>
+              <FormRow label="Session Title"><input className="ks-field" value={editNote.title} onChange={e=>setEditNote(n=>({...n,title:e.target.value}))} placeholder="e.g. Session 4 — Ch. 2 Review"/></FormRow>
+              <FormRow label="Notes" hint="What was discussed, what was observed, what's next — written for the client to read."><textarea className="ks-field" rows={12} value={editNote.content} onChange={e=>setEditNote(n=>({...n,content:e.target.value}))} placeholder="Session observations, key decisions, coaching notes…"/></FormRow>
+              <div style={{ display:"flex",gap:10 }}><button className="btn-gold" onClick={()=>saveNote(editNote)} disabled={!editNote.title.trim()||!editNote.content.trim()}>Save</button><button className="btn-ghost" onClick={()=>setEditNote(null)}>Cancel</button></div>
+            </Modal>
+          )}
+        </div>
+      )}
+
+      {/* WRITING ASSIGNMENTS */}
+      {tab==="assignments"&&(
+        <div>
+          {isAdmin&&<div style={{ display:"flex",justifyContent:"flex-end",marginBottom:20 }}><button className="btn-ghost" onClick={()=>setEditAssignment({title:"",description:"",dueDate:"",status:"Not Started",completedAt:"",completionNotes:""})}>+ Assign</button></div>}
+          {!isAdmin&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.dim,lineHeight:1.65,marginBottom:24 }}>Writing tasks and exercises assigned by Mikaela. Complete them at your own pace and mark them done when finished.</div>}
+          {assignments.length===0?<EmptyState message="Writing assignments will appear here." icon="✦"/>:(
+            [...assignments].sort((a,b)=>{ const o={"Not Started":0,"In Progress":1,"Complete":2}; return o[a.status]-o[b.status]||a.dueDate?.localeCompare(b.dueDate||""); }).map(a=>(
+              <div key={a.id} style={{ marginBottom:12,padding:"16px 20px",background:C.surface,border:`1px solid rgba(255,255,255,0.07)`,borderLeft:`3px solid ${aStatusColor(a.status)}44` }}>
+                <div style={{ display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12 }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:6 }}>
+                      <span style={{ color:aStatusColor(a.status),fontSize:13 }}>{aStatusIcon(a.status)}</span>
+                      <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:18,color:C.text }}>{a.title}</div>
+                    </div>
+                    {a.dueDate&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,marginBottom:a.description?8:0 }}>Due: {fmtDate(a.dueDate)}{a.status==="Complete"&&a.completedAt?` · Completed ${fmtDate(a.completedAt)}`:""}</div>}
+                    {a.description&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.dim,lineHeight:1.65,whiteSpace:"pre-wrap" }}>{a.description}</div>}
+                    {a.completionNotes&&<div style={{ marginTop:10,padding:"10px 14px",background:"rgba(201,168,76,0.05)",border:`1px solid ${C.goldBorder}`,fontFamily:"'Lato',sans-serif",fontSize:12,color:C.dim,fontStyle:"italic" }}>"{a.completionNotes}"</div>}
+                  </div>
+                  <div style={{ display:"flex",gap:6,flexShrink:0 }}>
+                    {!isAdmin&&a.status!=="Complete"&&<button className="btn-approve" onClick={()=>{setCompleteModal(a);setCompleteNote("");}}>Mark Complete</button>}
+                    {isAdmin&&<><button className="btn-sm" onClick={()=>setEditAssignment(a)}>Edit</button><button className="btn-del" onClick={()=>deleteAssignment(a.id)}>Del</button></>}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+          {editAssignment!==null&&(
+            <Modal title={editAssignment.id?"Edit Assignment":"New Writing Assignment"} onClose={()=>setEditAssignment(null)} wide>
+              <FormRow label="Title"><input className="ks-field" value={editAssignment.title} onChange={e=>setEditAssignment(a=>({...a,title:e.target.value}))} placeholder="e.g. Opening scene — no research allowed"/></FormRow>
+              <FormRow label="Due Date"><input className="ks-field" type="date" value={editAssignment.dueDate||""} onChange={e=>setEditAssignment(a=>({...a,dueDate:e.target.value}))}/></FormRow>
+              <FormRow label="Description" hint="What exactly should the client write? Be specific — this is a writing instruction."><textarea className="ks-field" rows={6} value={editAssignment.description} onChange={e=>setEditAssignment(a=>({...a,description:e.target.value}))} placeholder="Describe the assignment clearly and specifically…"/></FormRow>
+              <FormRow label="Status"><select className="ks-field" value={editAssignment.status} onChange={e=>setEditAssignment(a=>({...a,status:e.target.value}))}>{["Not Started","In Progress","Complete"].map(s=><option key={s}>{s}</option>)}</select></FormRow>
+              <div style={{ display:"flex",gap:10 }}><button className="btn-gold" onClick={()=>saveAssignment(editAssignment)} disabled={!editAssignment.title.trim()}>Save</button><button className="btn-ghost" onClick={()=>setEditAssignment(null)}>Cancel</button></div>
+            </Modal>
+          )}
+          {completeModal&&(
+            <Modal title="Mark Assignment Complete" onClose={()=>setCompleteModal(null)}>
+              <div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:17,color:C.dim,marginBottom:18 }}>"{completeModal.title}"</div>
+              <FormRow label="How did it go? (optional)" hint="Share a brief note — Mikaela will see this."><textarea className="ks-field" rows={3} value={completeNote} onChange={e=>setCompleteNote(e.target.value)} placeholder="A quick note about your process, what you noticed, or what was hard…"/></FormRow>
+              <div style={{ display:"flex",gap:10 }}>
+                <button className="btn-gold" onClick={()=>{completeAssignment(completeModal.id,completeNote);setCompleteModal(null);}}>Mark Complete</button>
+                <button className="btn-ghost" onClick={()=>setCompleteModal(null)}>Cancel</button>
+              </div>
+            </Modal>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// CLIENT SETTINGS VIEW
+// ─────────────────────────────────────────────────────────────
+function ClientSettingsView({ client, session, onUpdate }) {
+  const manuscript = isManuscript(client.tier);
+  return (
+    <div className="ks-up">
+      <SectionHeading>Preferences</SectionHeading>
+      {manuscript&&(
+        <div style={{ padding:"20px 24px",background:C.surface,border:`1px solid ${C.goldBorder}`,marginBottom:20 }}>
+          <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",gap:16 }}>
+            <div>
+              <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,fontWeight:700,color:C.text,marginBottom:5,letterSpacing:"0.04em" }}>Async Mode</div>
+              <div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted,lineHeight:1.65,maxWidth:440 }}>
+                When on, Mikaela will default to written feedback and direct messages rather than scheduling calls. Great if your schedule makes regular meetings difficult.
+              </div>
+            </div>
+            <button onClick={()=>onUpdate({...client,asyncMode:!client.asyncMode})}
+              style={{ background:client.asyncMode?"rgba(201,168,76,0.12)":"rgba(255,255,255,0.05)",border:`1px solid ${client.asyncMode?C.gold:"rgba(255,255,255,0.18)"}`,color:client.asyncMode?C.gold:"rgba(255,255,255,0.5)",fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",padding:"9px 18px",cursor:"pointer",transition:"all 0.2s",whiteSpace:"nowrap",flexShrink:0 }}>
+              {client.asyncMode?"◉ On":"○ Off"}
+            </button>
+          </div>
+        </div>
+      )}
+      <div style={{ padding:"14px 18px",background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)" }}>
+        <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,marginBottom:5 }}>Portal access</div>
+        <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.dim }}>@{session.username} · {TIER_LABELS[client.tier]||client.tier}</div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 // ADMIN MODALS
 // ─────────────────────────────────────────────────────────────
 function MeetingModal({ entry, onSave, onClose }) {
@@ -1587,6 +2105,22 @@ function MilestoneModal({ entry, onSave, onClose }) {
   );
 }
 
+function PipelineBlockModal({ entry, onSave, onClose }) {
+  const [form,setForm]=useState(entry||{title:"",type:"Meeting",status:"Not Started",date:"",notes:""});
+  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+  return (
+    <Modal title={entry?"Edit Pipeline Block":"Add Pipeline Block"} onClose={onClose}>
+      <FormRow label="Title"><input className="ks-field" value={form.title} onChange={e=>set("title",e.target.value)} placeholder="e.g. Cover Concept Review"/></FormRow>
+      <FormRow label="Type"><select className="ks-field" value={form.type} onChange={e=>set("type",e.target.value)}>{PIPELINE_BLOCK_TYPES.map(t=><option key={t}>{t}</option>)}</select></FormRow>
+      <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12 }}>
+        <FormRow label="Status"><select className="ks-field" value={form.status} onChange={e=>set("status",e.target.value)}>{PIPELINE_STATUSES_LIST.map(s=><option key={s}>{s}</option>)}</select></FormRow>
+        <FormRow label="Date (optional)"><input className="ks-field" type="date" value={form.date||""} onChange={e=>set("date",e.target.value)}/></FormRow>
+      </div>
+      <FormRow label="Notes (optional)" hint="Visible to client — context, instructions, or status details"><textarea className="ks-field" rows={3} value={form.notes||""} onChange={e=>set("notes",e.target.value)} placeholder="Any context the client should know…"/></FormRow>
+      <div style={{ display:"flex",gap:10,marginTop:8 }}><button className="btn-gold" onClick={()=>onSave({...form,id:form.id||uid()})} disabled={!form.title.trim()}>Save</button><button className="btn-ghost" onClick={onClose}>Cancel</button></div>
+    </Modal>
+  );
+}
 function GoalModal({ entry, onSave, onClose }) {
   const [form,setForm]=useState(entry||{name:"",period:"90day",progress:0,trajectory:"on-track"});
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
@@ -1889,13 +2423,15 @@ function AdminClientEditor({ client, users, onUpdate, activeSection, onSectionCh
   const ManuscriptSection=()=>{
     const [mNotes,setMNotes]=useState(client.manuscriptNotes||"");
     const [mEst,setMEst]=useState(client.estimatedCompletion||"");
+    const [mSession,setMSession]=useState(client.lastSessionDate||"");
     return (
       <div>
         <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:4 }}>
-          <FormRow label="Estimated Completion"><input className="ks-field" value={mEst} onChange={e=>setMEst(e.target.value)} placeholder="e.g. May 2024"/></FormRow>
+          <FormRow label="Estimated Completion"><input className="ks-field" value={mEst} onChange={e=>setMEst(e.target.value)} placeholder="e.g. May 2026"/></FormRow>
+          <FormRow label="Last Session Date"><input className="ks-field" type="date" value={mSession} onChange={e=>setMSession(e.target.value)}/></FormRow>
         </div>
         <FormRow label="Overall Notes"><textarea className="ks-field" rows={3} value={mNotes} onChange={e=>setMNotes(e.target.value)}/></FormRow>
-        <button className="btn-gold" onClick={()=>update({manuscriptNotes:mNotes,estimatedCompletion:mEst})} style={{ marginBottom:24 }}>Save Notes</button>
+        <button className="btn-gold" onClick={()=>update({manuscriptNotes:mNotes,estimatedCompletion:mEst,lastSessionDate:mSession})} style={{ marginBottom:24 }}>Save Notes</button>
         <GoldRule/>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",margin:"20px 0 16px" }}>
           <Label>Chapters</Label>
@@ -2018,16 +2554,32 @@ function AdminClientEditor({ client, users, onUpdate, activeSection, onSectionCh
   const SettingsSection=()=>{
     const [form,setForm]=useState({name:client.name,tier:client.tier});
     const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+    const manuscript=isManuscript(client.tier);
     return (
       <div>
         <FormRow label="Client Name"><input className="ks-field" value={form.name} onChange={e=>set("name",e.target.value)}/></FormRow>
         <FormRow label="Service Tier"><select className="ks-field" value={form.tier} onChange={e=>set("tier",e.target.value)}>{TIERS.map(t=><option key={t} value={t}>{TIER_LABELS[t]}</option>)}</select></FormRow>
+        {manuscript&&(
+          <div style={{ padding:"14px 18px",background:"rgba(201,168,76,0.04)",border:`1px solid ${C.goldBorder}`,marginBottom:18 }}>
+            <div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.muted,marginBottom:6 }}>Client Preference</div>
+            <div style={{ display:"flex",alignItems:"center",gap:12 }}>
+              <span style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.dim,flex:1 }}>Async Mode — client prefers written updates over scheduled meetings</span>
+              <span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.1em",color:client.asyncMode?C.gold:"rgba(255,255,255,0.35)",background:client.asyncMode?"rgba(201,168,76,0.12)":"rgba(255,255,255,0.04)",border:`1px solid ${client.asyncMode?C.gold:"rgba(255,255,255,0.1)"}`,padding:"4px 10px" }}>{client.asyncMode?"◉ ON":"○ OFF"}</span>
+            </div>
+          </div>
+        )}
         <button className="btn-gold" onClick={()=>update({name:form.name,tier:form.tier})}>Save Settings</button>
       </div>
     );
   };
 
-  const sections={ content:<ContentSection/>,calendar:<CalendarSection/>,report:<ReportSection/>,linkedin:<LinkedInSection/>,publications:<PubsSection/>,milestones:<MilestonesSection/>,strategy:<StrategySection/>,ai:<AISection/>,manuscript:<ManuscriptSection/>,timeline:<TimelineSection/>,voice:<BrandVoiceView client={client} isAdmin={true} onUpdate={onUpdate} apiKey={apiKey}/>,documents:<DocumentsView client={client} session={{ username:"mikaela",role:"admin" }} onUpdate={onUpdate}/>,messages:<MessagesSection/>,playbook:<PlaybookSection/>,welcome:<WelcomeSection/>,notes:<AdminNotesSection/>,settings:<SettingsSection/> };
+  // ── Pipeline (admin) ──
+  const PipelineSection=()=><BookPipelineView client={client} isAdmin={true} onUpdate={onUpdate}/>;
+
+  // ── Coaching (admin) ──
+  const CoachingSection=()=><BookCoachingView client={client} isAdmin={true} session={{ username:"mikaela",role:"admin" }} onUpdate={onUpdate}/>;
+
+  const sections={ content:<ContentSection/>,calendar:<CalendarSection/>,report:<ReportSection/>,linkedin:<LinkedInSection/>,publications:<PubsSection/>,milestones:<MilestonesSection/>,strategy:<StrategySection/>,ai:<AISection/>,manuscript:<ManuscriptSection/>,pipeline:<PipelineSection/>,coaching:<CoachingSection/>,timeline:<TimelineSection/>,voice:<BrandVoiceView client={client} isAdmin={true} onUpdate={onUpdate} apiKey={apiKey}/>,documents:<DocumentsView client={client} session={{ username:"mikaela",role:"admin" }} onUpdate={onUpdate}/>,messages:<MessagesSection/>,playbook:<PlaybookSection/>,welcome:<WelcomeSection/>,notes:<AdminNotesSection/>,settings:<SettingsSection/> };
 
   return (
     <div className="ks-in" style={{ padding:"44px 52px",maxWidth:880 }}>
@@ -2093,12 +2645,19 @@ function ClientDashboard({ client, session, onLogout, onUpdate, apiKey }) {
         { key:"ai",label:"AI Visibility",active:view==="ai",onClick:()=>setView("ai") },
       ]:[]),
     ]}]:[]),
-    ...(manuscript?[{ label:"Manuscript",items:[{ key:"manuscript",label:"Manuscript",active:view==="manuscript",onClick:()=>setView("manuscript") }]}]:[]),
+    ...(manuscript?[{ label:"Manuscript",items:[
+      { key:"manuscript",label:"Manuscript",active:view==="manuscript",onClick:()=>setView("manuscript") },
+      { key:"pipeline",label:"Production Pipeline",active:view==="pipeline",onClick:()=>setView("pipeline") },
+      ...(client.tier==="coaching"?[{ key:"coaching",label:"Book Coaching",active:view==="coaching",onClick:()=>setView("coaching"),badge:((client.writingAssignments||[]).filter(a=>a.status!=="Complete").length)||null }]:[]),
+    ]}]:[]),
     { label:"Your Space",items:[
       { key:"voice",label:"Brand Voice",icon:"◇",active:view==="voice",onClick:()=>setView("voice"),badge:unansweredIdeas||null },
       { key:"playbook",label:"Media Playbook",active:view==="playbook",onClick:()=>setView("playbook") },
       { key:"timeline",label:"Results Timeline",active:view==="timeline",onClick:()=>setView("timeline") },
       { key:"documents",label:"Documents",active:view==="documents",onClick:()=>setView("documents") },
+    ]},
+    { label:"Account",items:[
+      { key:"preferences",label:"Preferences",active:view==="preferences",onClick:()=>setView("preferences") },
     ]},
   ];
 
@@ -2115,10 +2674,13 @@ function ClientDashboard({ client, session, onLogout, onUpdate, apiKey }) {
       case "strategy": return <StrategyMapView client={client}/>;
       case "ai": return <AIVisibilityView client={client}/>;
       case "manuscript": return <ManuscriptView client={client}/>;
+      case "pipeline": return <BookPipelineView client={client} isAdmin={false} onUpdate={onUpdate}/>;
+      case "coaching": return <BookCoachingView client={client} isAdmin={false} session={session} onUpdate={onUpdate}/>;
       case "voice": return <BrandVoiceView {...p}/>;
       case "playbook": return <MediaPlaybookView client={client}/>;
       case "timeline": return <TimelineView client={client}/>;
       case "documents": return <DocumentsView {...p}/>;
+      case "preferences": return <ClientSettingsView client={client} session={session} onUpdate={onUpdate}/>;
       default: return null;
     }
   };
@@ -2164,17 +2726,21 @@ function AdminDashboard({ clients, users, onUpdateClient, onAddClient, onLogout 
     const b=isBranding(c.tier), m=isManuscript(c.tier), a=hasAuthority(c.tier), inf=hasInfluence(c.tier);
     const ns=[
       { items:[{ key:"content",label:"Content",active:activeSection==="content",onClick:()=>setActiveSection("content") },{ key:"calendar",label:"Calendar",active:activeSection==="calendar",onClick:()=>setActiveSection("calendar") }] },
-      { label:"Reports",items:[
+      ...(!m?[{ label:"Reports",items:[
         { key:"report",label:"Performance Report",active:activeSection==="report",onClick:()=>setActiveSection("report") },
         ...(b?[{ key:"linkedin",label:"LinkedIn Stats",active:activeSection==="linkedin",onClick:()=>setActiveSection("linkedin") }]:[]),
         { key:"publications",label:"Publications",active:activeSection==="publications",onClick:()=>setActiveSection("publications") },
-      ]},
+      ]}]:[]),
       ...(a?[{ label:"Brand",items:[
         { key:"milestones",label:"Milestones",active:activeSection==="milestones",onClick:()=>setActiveSection("milestones") },
         { key:"strategy",label:"Strategy Map",active:activeSection==="strategy",onClick:()=>setActiveSection("strategy") },
         ...(inf?[{ key:"ai",label:"AI Visibility",active:activeSection==="ai",onClick:()=>setActiveSection("ai") }]:[]),
       ]}]:[]),
-      ...(m?[{ label:"Manuscript",items:[{ key:"manuscript",label:"Manuscript",active:activeSection==="manuscript",onClick:()=>setActiveSection("manuscript") }]}]:[]),
+      ...(m?[{ label:"Manuscript",items:[
+        { key:"manuscript",label:"Manuscript",active:activeSection==="manuscript",onClick:()=>setActiveSection("manuscript") },
+        { key:"pipeline",label:"Production Pipeline",active:activeSection==="pipeline",onClick:()=>setActiveSection("pipeline") },
+        ...(c.tier==="coaching"?[{ key:"coaching",label:"Book Coaching",active:activeSection==="coaching",onClick:()=>setActiveSection("coaching") }]:[]),
+      ]}]:[]),
       { label:"Resources",items:[
         { key:"voice",label:"Brand Voice",active:activeSection==="voice",onClick:()=>setActiveSection("voice") },
         { key:"playbook",label:"Media Playbook",active:activeSection==="playbook",onClick:()=>setActiveSection("playbook") },
@@ -2324,15 +2890,15 @@ export default function App() {
 
   useEffect(()=>{
     (async()=>{
-      const u=await store.get("ks-users-v3",DEFAULT_USERS);
-      const c=await store.get("ks-clients-v3",DEFAULT_CLIENTS);
+      const u=await store.get("ks-users-v6",DEFAULT_USERS);
+      const c=await store.get("ks-clients-v6",DEFAULT_CLIENTS);
       setUsers(u); setClients(c); setLoading(false);
       try{ apiKey.current=localStorage.getItem("ks-api-key")||""; }catch{}
     })();
   },[]);
 
-  useEffect(()=>{ if(users.length>0) store.set("ks-users-v3",users); },[users]);
-  useEffect(()=>{ if(clients.length>0) store.set("ks-clients-v3",clients); },[clients]);
+  useEffect(()=>{ if(users.length>0) store.set("ks-users-v6",users); },[users]);
+  useEffect(()=>{ if(clients.length>0) store.set("ks-clients-v6",clients); },[clients]);
 
   const handleLogin=useCallback((username,password)=>{
     const user=users.find(u=>u.username===username&&u.password===password);
