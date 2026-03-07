@@ -113,7 +113,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
       .main-content { padding:20px 16px !important; }
       .mob-menu-btn { display:flex !important; }
     }
-    .mob-menu-btn { display:none; align-items:center; justify-content:center; width:36px; height:36px; background:rgba(201,168,76,0.08); border:1px solid rgba(201,168,76,0.2); cursor:pointer; color:${C.gold}; font-size:16px; position:fixed; top:16px; left:16px; z-index:140; }
+    .mob-menu-btn { display:none; align-items:center; justify-content:center; width:36px; height:36px; background:rgba(201,168,76,0.08); border:1px solid rgba(201,168,76,0.2); cursor:pointer; color:#c9a84c; font-size:16px; position:fixed; top:16px; left:16px; z-index:140; }
   `;
   document.head.appendChild(s);
 })();
@@ -442,8 +442,8 @@ function TagInput({ tags, onChange, placeholder, avoid }) {
 function Sidebar({ logo, name, badge, navSections, onLogout, savedIndicator, mobileOpen, onMobileClose }) {
   return (
     <>
-      {mobileOpen&&<div onClick={onMobileClose} style={{ position:"fixed",inset:0,background:"rgba(24,0,19,0.7)",zIndex:149,display:"none" }} className="mob-overlay"/>}
-      <div className="sidebar" style={{ width:230,background:C.surface,borderRight:`1px solid ${C.goldBorder}`,display:"flex",flexDirection:"column",flexShrink:0,position:"sticky",top:0,height:"100vh",overflow:"hidden",zIndex:150 }}>
+      {mobileOpen&&<div onClick={onMobileClose} style={{ position:"fixed",inset:0,background:"rgba(24,0,19,0.7)",zIndex:149 }} className="mob-overlay"/>}
+      <div className={`sidebar${mobileOpen?" mob-open":""}`} style={{ width:230,background:C.surface,borderRight:`1px solid ${C.goldBorder}`,display:"flex",flexDirection:"column",flexShrink:0,position:"sticky",top:0,height:"100vh",overflow:"hidden",zIndex:150 }}>
         <div style={{ padding:"28px 20px 20px" }}>
           <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:10,letterSpacing:"0.3em",textTransform:"uppercase",color:C.muted,marginBottom:7 }}>{logo}</div>
           <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:22,fontWeight:300,color:C.white,letterSpacing:"0.08em" }}>Kepler<span style={{ color:C.gold }}> Script</span></div>
@@ -2126,9 +2126,7 @@ function ClientDashboard({ client, session, onLogout, onUpdate, apiKey }) {
   return (
     <div style={{ display:"flex",minHeight:"100vh",background:C.bg }}>
       <button className="mob-menu-btn" onClick={()=>setMobOpen(true)}>☰</button>
-      <div className={`sidebar${mobOpen?" mob-open":""}`}>
-        <Sidebar logo="Client Portal" name={client.name} badge={<TierChip tier={client.tier}/>} navSections={navSections} onLogout={onLogout} mobileOpen={mobOpen} onMobileClose={()=>setMobOpen(false)}/>
-      </div>
+      <Sidebar logo="Client Portal" name={client.name} badge={<TierChip tier={client.tier}/>} navSections={navSections} onLogout={onLogout} mobileOpen={mobOpen} onMobileClose={()=>setMobOpen(false)}/>
       <div style={{ flex:1,overflow:"auto" }}>
         <div style={{ padding:"44px 52px",maxWidth:860 }}>{renderView()}</div>
       </div>
