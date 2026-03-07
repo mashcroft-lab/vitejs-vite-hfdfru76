@@ -106,7 +106,14 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
     .upload-zone { border:1px dashed rgba(201,168,76,0.3); padding:28px; text-align:center; cursor:pointer; transition:all 0.2s; background:rgba(201,168,76,0.02); }
     .upload-zone:hover { border-color:rgba(201,168,76,0.6); background:rgba(201,168,76,0.06); }
 
-    @media (max-width:768px) { .sidebar { width:0 !important; overflow:hidden !important; } .main-content { padding:20px 16px !important; } }
+    @media (max-width:768px) {
+      .sidebar { position:fixed !important; left:0; top:0; height:100vh; transform:translateX(-100%); transition:transform 0.28s cubic-bezier(0.16,1,0.3,1); z-index:150; }
+      .sidebar.mob-open { transform:translateX(0); }
+      .mob-overlay { display:block !important; }
+      .main-content { padding:20px 16px !important; }
+      .mob-menu-btn { display:flex !important; }
+    }
+    .mob-menu-btn { display:none; align-items:center; justify-content:center; width:36px; height:36px; background:rgba(201,168,76,0.08); border:1px solid rgba(201,168,76,0.2); cursor:pointer; color:${C.gold}; font-size:16px; position:fixed; top:16px; left:16px; z-index:140; }
   `;
   document.head.appendChild(s);
 })();
@@ -194,6 +201,10 @@ const mkClient = o => ({
   aiVisibility:{ score:0, lastUpdated:"", queries:[], suggestions:[] },
   brandVoice:{ toneWords:[], avoidWords:[], approvedTopics:[], guidelines:"", examplePosts:[], toneProfile:{ formalCasual:50, boldMeasured:50, personalProfessional:50 }, exploreIdeas:[], whiteSpaceCache:null },
   documents:[], timelineEntries:[],
+  directMessages:[],
+  adminNotes:"",
+  welcomeMessage:"",
+  mediaPlaybook:{ sections:[] },
   ...o,
 });
 
@@ -206,34 +217,34 @@ const DEFAULT_USERS = [
 ];
 
 const DEFAULT_CLIENTS = [
-  mkClient({ id:"c1", name:"Sarah Chen", username:"sarah.chen", tier:"influence", joinDate:"2024-01-15",
+  mkClient({ id:"c1", name:"Sarah Chen", username:"sarah.chen", tier:"influence", joinDate:"2026-01-15",
     contentCalendar:[
-      { id:"cc1",title:"The Art of Strategic Silence",type:"LinkedIn Article",status:"Published",approvalStatus:"Approved",revisionNotes:"",scheduledDate:"2024-03-01",link:"https://linkedin.com" },
-      { id:"cc2",title:"Why Most Executives Fail at Thought Leadership",type:"Newsletter",status:"In Review",approvalStatus:"Pending Approval",revisionNotes:"",scheduledDate:"2024-03-10",link:"" },
-      { id:"cc3",title:"The 5 Conversations That Built My Career",type:"LinkedIn Post",status:"In Progress",approvalStatus:"Pending Approval",revisionNotes:"",scheduledDate:"2024-03-18",link:"" },
-      { id:"cc4",title:"Women Redefining Tech Leadership",type:"Forbes Article",status:"In Progress",approvalStatus:"Pending Approval",revisionNotes:"",scheduledDate:"2024-03-28",link:"" },
+      { id:"cc1",title:"The Art of Strategic Silence",type:"LinkedIn Article",status:"Published",approvalStatus:"Approved",revisionNotes:"",scheduledDate:"2026-03-01",link:"https://linkedin.com" },
+      { id:"cc2",title:"Why Most Executives Fail at Thought Leadership",type:"Newsletter",status:"In Review",approvalStatus:"Pending Approval",revisionNotes:"",scheduledDate:"2026-03-10",link:"" },
+      { id:"cc3",title:"The 5 Conversations That Built My Career",type:"LinkedIn Post",status:"In Progress",approvalStatus:"Pending Approval",revisionNotes:"",scheduledDate:"2026-03-18",link:"" },
+      { id:"cc4",title:"Women Redefining Tech Leadership",type:"Forbes Article",status:"In Progress",approvalStatus:"Pending Approval",revisionNotes:"",scheduledDate:"2026-03-28",link:"" },
     ],
     publicationLog:[
-      { id:"pl1",outlet:"Forbes",title:"The New Rules of Executive Presence",date:"2024-02-14",link:"https://forbes.com" },
-      { id:"pl2",outlet:"Fast Company",title:"How to Build Influence Without Burning Out",date:"2024-01-28",link:"https://fastcompany.com" },
-      { id:"pl3",outlet:"Harvard Business Review",title:"The Quiet Power of Listening Leaders",date:"2024-01-10",link:"https://hbr.org" },
+      { id:"pl1",outlet:"Forbes",title:"The New Rules of Executive Presence",date:"2026-02-14",link:"https://forbes.com" },
+      { id:"pl2",outlet:"Fast Company",title:"How to Build Influence Without Burning Out",date:"2026-01-28",link:"https://fastcompany.com" },
+      { id:"pl3",outlet:"Harvard Business Review",title:"The Quiet Power of Listening Leaders",date:"2026-01-10",link:"https://hbr.org" },
     ],
     performanceReport:{ period:"February 2024",engagement:"14.2K",reach:"89K",placements:"3",summary:"February marked a breakthrough month. Your Forbes placement drove a 340% spike in LinkedIn profile views. Newsletter open rate climbed to 58%—well above industry average. Momentum is building exactly as planned." },
     milestones:[
-      { id:"m1",name:"First Forbes Placement",status:"Complete",completionDate:"2024-02-14" },
-      { id:"m2",name:"LinkedIn Followers: 10K",status:"Complete",completionDate:"2024-02-28" },
+      { id:"m1",name:"First Forbes Placement",status:"Complete",completionDate:"2026-02-14" },
+      { id:"m2",name:"LinkedIn Followers: 10K",status:"Complete",completionDate:"2026-02-28" },
       { id:"m3",name:"Podcast Booked (Top 100)",status:"In Progress",completionDate:"" },
       { id:"m4",name:"Speaking Engagement Secured",status:"Not Started",completionDate:"" },
     ],
     meetings:[
-      { id:"mt1",title:"Monthly Strategy Call",date:"2024-03-12",time:"10:00 AM",description:"Review February results and set March content priorities.",messages:[{ id:"msg1",from:"sarah.chen",text:"Can we move this to 11am? I have a conflict.",ts:"2024-03-10T09:00:00Z" }] },
-      { id:"mt2",title:"Forbes Draft Review",date:"2024-03-25",time:"2:00 PM",description:"Walk through the draft for the tech leadership piece.",messages:[] },
+      { id:"mt1",title:"Monthly Strategy Call",date:"2026-03-12",time:"10:00 AM",description:"Review February results and set March content priorities.",agenda:"Review Forbes performance data · Set Q2 content priorities · Discuss podcast strategy",messages:[{ id:"msg1",from:"sarah.chen",text:"Can we move this to 11am? I have a conflict.",ts:"2026-03-10T09:00:00Z" }] },
+      { id:"mt2",title:"Forbes Draft Review",date:"2026-03-25",time:"2:00 PM",description:"Walk through the draft for the tech leadership piece.",agenda:"Read-through of draft · Revision priorities · Timeline to submission",messages:[] },
     ],
     linkedInStats:[
-      { id:"ls1",date:"2024-01-01",followers:8200,impressions:42000,profileViews:1800,engagementRate:"4.2",topPost:"The Quiet Power of Listening Leaders" },
-      { id:"ls2",date:"2024-02-01",followers:10100,impressions:89000,profileViews:4200,engagementRate:"6.8",topPost:"Why Most Executives Fail at Thought Leadership" },
+      { id:"ls1",date:"2026-01-01",followers:8200,impressions:42000,profileViews:1800,engagementRate:"4.2",topPost:"The Quiet Power of Listening Leaders" },
+      { id:"ls2",date:"2026-02-01",followers:10100,impressions:89000,profileViews:4200,engagementRate:"6.8",topPost:"Why Most Executives Fail at Thought Leadership" },
     ],
-    aiVisibility:{ score:42,lastUpdated:"2024-03-01",queries:[
+    aiVisibility:{ score:42,lastUpdated:"2026-03-01",queries:[
       { id:"q1",query:"Top women in tech leadership to follow",appears:true,platforms:["ChatGPT","Perplexity"],notes:"Appearing consistently in ChatGPT responses." },
       { id:"q2",query:"Executive presence thought leaders",appears:false,platforms:[],notes:"Not yet appearing. Target by Q3." },
       { id:"q3",query:"Best LinkedIn voices for executives",appears:true,platforms:["Perplexity"],notes:"Mentioned in Perplexity when asked about executive LinkedIn." },
@@ -250,47 +261,66 @@ const DEFAULT_CLIENTS = [
       { id:"p3",name:"Influence",description:"Become the definitive voice in your space.",outcomes:["Book or course launch","Keynote bookings","Revenue attribution"],status:"upcoming" },
     ]},
     brandVoice:{ toneWords:["Authoritative","Warm","Precise","Strategic","Human"],avoidWords:["Hustle","Crushing it","Thought leader","Game-changer"],approvedTopics:["Executive Leadership","Women in Tech","Strategic Communication","Organizational Culture"],guidelines:"Sarah's voice balances authority with accessibility. She speaks from experience, not theory. No jargon, no buzzwords. Every piece should leave the reader with something actionable.",examplePosts:["The best meetings I've ever run had fewer slides and more silence.","Leadership isn't about having all the answers. It's about asking better questions."],toneProfile:{ formalCasual:38,boldMeasured:65,personalProfessional:55 },exploreIdeas:[
-      { id:"ei1",idea:"The psychology of executive decision fatigue",response:"This is strong — connects your leadership lens to neuroscience. Let's develop an HBR angle.",ts:"2024-03-01",hasResponse:true },
-      { id:"ei2",idea:"What if we talked about the meetings I've actually walked out of?",response:"",ts:"2024-03-08",hasResponse:false },
+      { id:"ei1",idea:"The psychology of executive decision fatigue",response:"This is strong — connects your leadership lens to neuroscience. Let's develop an HBR angle.",ts:"2026-03-01",hasResponse:true },
+      { id:"ei2",idea:"What if we talked about the meetings I've actually walked out of?",response:"",ts:"2026-03-08",hasResponse:false },
     ],whiteSpaceCache:null },
     timelineEntries:[
-      { id:"te1",date:"2024-01-10",type:"publication",title:"HBR Placement",description:"The Quiet Power of Listening Leaders published in Harvard Business Review." },
-      { id:"te2",date:"2024-02-14",type:"milestone",title:"First Forbes Placement",description:"Milestone achieved." },
-      { id:"te3",date:"2024-02-28",type:"milestone",title:"LinkedIn: 10K Followers",description:"LinkedIn audience milestone hit." },
+      { id:"te1",date:"2026-01-10",type:"publication",title:"HBR Placement",description:"The Quiet Power of Listening Leaders published in Harvard Business Review." },
+      { id:"te2",date:"2026-02-14",type:"milestone",title:"First Forbes Placement",description:"Milestone achieved." },
+      { id:"te3",date:"2026-02-28",type:"milestone",title:"LinkedIn: 10K Followers",description:"LinkedIn audience milestone hit." },
     ],
+    welcomeMessage:"Sarah — you're in an exceptional position right now. The Forbes placement has opened doors we're going to move through deliberately and strategically. Everything we do this quarter is building toward a level of authority that speaks for itself. I'm glad to be in your corner.",
+    adminNotes:"Very responsive, prefers direct feedback. Forbes piece got 3x expected traffic. Mention podcast angle on next call — she's been hinting at it. Birthday in April.",
+    directMessages:[
+      { id:"dm1",from:"mikaela",text:"Sarah — just wanted to flag that the Forbes piece is already outperforming our projections. You should be really proud. I'll have the full numbers ready for our call on the 12th.",ts:"2026-03-02T10:30:00Z" },
+      { id:"dm2",from:"sarah.chen",text:"That's incredible! I've had three people reach out already. Can't wait to discuss.",ts:"2026-03-02T11:15:00Z" },
+    ],
+    mediaPlaybook:{ sections:[
+      { id:"mp1",title:"If a journalist or producer contacts you",content:"Forward the inquiry to me before responding to anything. I'll assess the outlet, the angle, and whether it aligns with where we're taking your brand. A quick response of 'Let me check my schedule and get back to you shortly' buys us 24 hours without closing the door." },
+      { id:"mp2",title:"How to handle comments on your content",content:"For positive engagement: a brief, genuine reply goes a long way. For criticism or trolling: do not engage. Screenshot and send to me if it feels targeted. Your silence is never weakness — it's strategy.\n\nFor questions you don't know how to answer: 'Great question — I'll be sharing more on this soon' is always appropriate." },
+      { id:"mp3",title:"What to say if someone asks who writes your content",content:"The honest and professional answer: 'I work with a strategic writing partner who helps me articulate my thinking.' You've lived every idea in every piece. The collaboration is real. You are never misrepresenting yourself." },
+      { id:"mp4",title:"TV, broadcast media, and major publishing negotiations",content:"Major media appearances and publisher negotiations are handled through Kepler Script's partner network — specialists who operate at that level every day.\n\nIf any of these opportunities arise, come to me first. I will connect you with the right people and make sure you walk in fully prepared. You will never be navigating that alone." },
+    ]},
   }),
-  mkClient({ id:"c2", name:"James Walker", username:"james.walker", tier:"authority", joinDate:"2024-02-01",
+  mkClient({ id:"c2", name:"James Walker", username:"james.walker", tier:"authority", joinDate:"2026-02-01",
     contentCalendar:[
-      { id:"cc1",title:"The Founder's Guide to Delegation",type:"LinkedIn Article",status:"Published",approvalStatus:"Approved",revisionNotes:"",scheduledDate:"2024-03-05",link:"https://linkedin.com" },
-      { id:"cc2",title:"Building Culture in a Remote-First World",type:"Newsletter",status:"In Progress",approvalStatus:"Pending Approval",revisionNotes:"",scheduledDate:"2024-03-14",link:"" },
+      { id:"cc1",title:"The Founder's Guide to Delegation",type:"LinkedIn Article",status:"Published",approvalStatus:"Approved",revisionNotes:"",scheduledDate:"2026-03-05",link:"https://linkedin.com" },
+      { id:"cc2",title:"Building Culture in a Remote-First World",type:"Newsletter",status:"In Progress",approvalStatus:"Pending Approval",revisionNotes:"",scheduledDate:"2026-03-14",link:"" },
     ],
-    publicationLog:[{ id:"pl1",outlet:"Inc.",title:"The Overlooked Skill Every Founder Needs",date:"2024-02-20",link:"https://inc.com" }],
+    publicationLog:[{ id:"pl1",outlet:"Inc.",title:"The Overlooked Skill Every Founder Needs",date:"2026-02-20",link:"https://inc.com" }],
     performanceReport:{ period:"February 2024",engagement:"6.8K",reach:"42K",placements:"1",summary:"Solid first full month. The Inc. piece performed above expectations and has driven meaningful inbound to your LinkedIn." },
     milestones:[
-      { id:"m1",name:"First Major Publication Placement",status:"Complete",completionDate:"2024-02-20" },
+      { id:"m1",name:"First Major Publication Placement",status:"Complete",completionDate:"2026-02-20" },
       { id:"m2",name:"LinkedIn Followers: 5K",status:"In Progress",completionDate:"" },
       { id:"m3",name:"Newsletter: 1K Subscribers",status:"Not Started",completionDate:"" },
     ],
-    meetings:[{ id:"mt1",title:"Strategy Session",date:"2024-03-08",time:"9:00 AM",description:"Set 90-day content priorities.",messages:[] }],
-    linkedInStats:[{ id:"ls1",date:"2024-02-01",followers:3200,impressions:18000,profileViews:720,engagementRate:"3.1",topPost:"The Founder's Guide to Delegation" }],
+    meetings:[{ id:"mt1",title:"Strategy Session",date:"2026-03-08",time:"9:00 AM",description:"Set 90-day content priorities.",agenda:"Review Inc. results · 90-day content calendar · Newsletter launch timeline",messages:[] }],
+    linkedInStats:[{ id:"ls1",date:"2026-02-01",followers:3200,impressions:18000,profileViews:720,engagementRate:"3.1",topPost:"The Founder's Guide to Delegation" }],
     brandVoice:{ toneWords:["Direct","Pragmatic","Honest","Energetic"],avoidWords:["Disruptive","Pivot","Synergy"],approvedTopics:["Founder Leadership","Remote Work","Company Culture"],guidelines:"James speaks plainly and from the trenches. No theory — only what he's actually done.",examplePosts:[],toneProfile:{ formalCasual:30,boldMeasured:72,personalProfessional:45 },exploreIdeas:[],whiteSpaceCache:null },
+    welcomeMessage:"James — the Inc. piece was a strong start and exactly the kind of credibility signal we build everything else on. We're just getting started.",
+    adminNotes:"Founder energy, moves fast. Prefers bullet-point feedback. Skeptical of 'brand' language — frame everything around outcomes and revenue. Follow up on newsletter idea.",
+    directMessages:[],
+    mediaPlaybook:{ sections:[
+      { id:"mp1",title:"If a journalist contacts you",content:"Send me the email before replying. I'll advise on whether to engage and how to position the conversation. Never agree to an interview without looping me in first." },
+      { id:"mp2",title:"Publishing, TV, and major media",content:"Large-scale media and publisher conversations go through Kepler Script's partner network. Come to me first — I'll make sure the right people are involved and that you're fully prepared before any significant conversation." },
+    ]},
   }),
-  mkClient({ id:"c3", name:"Elena Russo", username:"elena.russo", tier:"foundation", joinDate:"2024-02-15",
-    contentCalendar:[{ id:"cc1",title:"Five Lessons from 20 Years in Hospitality",type:"LinkedIn Article",status:"In Review",approvalStatus:"Pending Approval",revisionNotes:"",scheduledDate:"2024-03-10",link:"" }],
+  mkClient({ id:"c3", name:"Elena Russo", username:"elena.russo", tier:"foundation", joinDate:"2026-02-15",
+    contentCalendar:[{ id:"cc1",title:"Five Lessons from 20 Years in Hospitality",type:"LinkedIn Article",status:"In Review",approvalStatus:"Pending Approval",revisionNotes:"",scheduledDate:"2026-03-10",link:"" }],
     performanceReport:{ period:"February 2024",engagement:"—",reach:"—",placements:"0",summary:"First month focused on establishing your voice. Two strong pieces are in development." },
     brandVoice:{ toneWords:["Warm","Expert","Inviting","Grounded"],avoidWords:[],approvedTopics:["Hospitality","Guest Experience","Leadership"],guidelines:"Elena's voice reflects decades of experience — warm but authoritative.",examplePosts:[],toneProfile:{ formalCasual:55,boldMeasured:45,personalProfessional:60 },exploreIdeas:[],whiteSpaceCache:null },
   }),
-  mkClient({ id:"c4", name:"David Park", username:"david.park", tier:"ghostwriting", joinDate:"2024-01-08",
+  mkClient({ id:"c4", name:"David Park", username:"david.park", tier:"ghostwriting", joinDate:"2026-01-08",
     chapters:[
-      { id:"ch1",title:"Prologue: The Problem with Perfect",status:"Final",notes:"Beautifully written. This is the hook.",dueDate:"2024-01-20" },
-      { id:"ch2",title:"Chapter 1: Unlearning Success",status:"Final",notes:"Strong argument.",dueDate:"2024-01-28" },
-      { id:"ch3",title:"Chapter 2: The Architecture of Failure",status:"Revision",notes:"Section 3 needs tightening.",dueDate:"2024-02-10" },
-      { id:"ch4",title:"Chapter 3: When Systems Break People",status:"Draft",notes:"First draft strong. Awaiting your notes.",dueDate:"2024-03-05" },
-      { id:"ch5",title:"Chapter 4: The Recovery Blueprint",status:"Outline",notes:"Outline approved.",dueDate:"2024-03-22" },
+      { id:"ch1",title:"Prologue: The Problem with Perfect",status:"Final",notes:"Beautifully written. This is the hook.",dueDate:"2026-01-20" },
+      { id:"ch2",title:"Chapter 1: Unlearning Success",status:"Final",notes:"Strong argument.",dueDate:"2026-01-28" },
+      { id:"ch3",title:"Chapter 2: The Architecture of Failure",status:"Revision",notes:"Section 3 needs tightening.",dueDate:"2026-02-10" },
+      { id:"ch4",title:"Chapter 3: When Systems Break People",status:"Draft",notes:"First draft strong. Awaiting your notes.",dueDate:"2026-03-05" },
+      { id:"ch5",title:"Chapter 4: The Recovery Blueprint",status:"Outline",notes:"Outline approved.",dueDate:"2026-03-22" },
     ],
     estimatedCompletion:"May 2024",
     manuscriptNotes:"Overall trajectory is excellent. Your voice is compelling and distinctive.",
-    meetings:[{ id:"mt1",title:"Chapter 3 Review Call",date:"2024-03-15",time:"11:00 AM",description:"Walk through Chapter 3 draft together.",messages:[] }],
+    meetings:[{ id:"mt1",title:"Chapter 3 Review Call",date:"2026-03-15",time:"11:00 AM",description:"Walk through Chapter 3 draft together.",messages:[] }],
     brandVoice:{ toneWords:[],avoidWords:[],approvedTopics:[],guidelines:"",examplePosts:[],toneProfile:{ formalCasual:50,boldMeasured:50,personalProfessional:50 },exploreIdeas:[],whiteSpaceCache:null },
   }),
 ];
@@ -409,38 +439,41 @@ function TagInput({ tags, onChange, placeholder, avoid }) {
 // ─────────────────────────────────────────────────────────────
 // SIDEBAR COMPONENT (shared admin + client)
 // ─────────────────────────────────────────────────────────────
-function Sidebar({ logo, name, badge, navSections, onLogout, savedIndicator }) {
+function Sidebar({ logo, name, badge, navSections, onLogout, savedIndicator, mobileOpen, onMobileClose }) {
   return (
-    <div className="sidebar" style={{ width:230,background:C.surface,borderRight:`1px solid ${C.goldBorder}`,display:"flex",flexDirection:"column",flexShrink:0,position:"sticky",top:0,height:"100vh",overflow:"hidden" }}>
-      <div style={{ padding:"28px 20px 20px" }}>
-        <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:10,letterSpacing:"0.3em",textTransform:"uppercase",color:C.muted,marginBottom:7 }}>{logo}</div>
-        <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:22,fontWeight:300,color:C.white,letterSpacing:"0.08em" }}>Kepler<span style={{ color:C.gold }}> Script</span></div>
+    <>
+      {mobileOpen&&<div onClick={onMobileClose} style={{ position:"fixed",inset:0,background:"rgba(24,0,19,0.7)",zIndex:149,display:"none" }} className="mob-overlay"/>}
+      <div className="sidebar" style={{ width:230,background:C.surface,borderRight:`1px solid ${C.goldBorder}`,display:"flex",flexDirection:"column",flexShrink:0,position:"sticky",top:0,height:"100vh",overflow:"hidden",zIndex:150 }}>
+        <div style={{ padding:"28px 20px 20px" }}>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:10,letterSpacing:"0.3em",textTransform:"uppercase",color:C.muted,marginBottom:7 }}>{logo}</div>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:22,fontWeight:300,color:C.white,letterSpacing:"0.08em" }}>Kepler<span style={{ color:C.gold }}> Script</span></div>
+        </div>
+        <GoldRule my={0} />
+        <div style={{ padding:"14px 20px 14px" }}>
+          <div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.white,fontWeight:700,marginBottom:7 }}>{name}</div>
+          {badge}
+        </div>
+        <GoldRule my={0} />
+        <nav style={{ flex:1,paddingTop:6,overflowY:"auto" }}>
+          {navSections.map((section,si)=>(
+            <div key={si}>
+              {section.label && <div className="nav-section">{section.label}</div>}
+              {section.items.map(item=>(
+                <div key={item.key} className={`nav-item ${item.active?"active":""}`} onClick={()=>{ item.onClick(); onMobileClose&&onMobileClose(); }}>
+                  {item.icon && <span style={{ fontSize:12,opacity:0.7 }}>{item.icon}</span>}
+                  {item.label}
+                  {item.badge && <span style={{ marginLeft:"auto",background:"rgba(201,168,76,0.18)",color:C.gold,fontSize:9,fontWeight:700,padding:"1px 6px",borderRadius:8 }}>{item.badge}</span>}
+                </div>
+              ))}
+            </div>
+          ))}
+        </nav>
+        <div style={{ padding:"14px 20px",borderTop:`1px solid ${C.goldBorder}` }}>
+          {savedIndicator && <div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,color:C.gold,letterSpacing:"0.1em",textAlign:"center",marginBottom:10 }}>✓ Saved</div>}
+          <button className="btn-ghost" onClick={onLogout} style={{ width:"100%",fontSize:10 }}>Sign Out</button>
+        </div>
       </div>
-      <GoldRule my={0} />
-      <div style={{ padding:"14px 20px 14px" }}>
-        <div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.white,fontWeight:700,marginBottom:7 }}>{name}</div>
-        {badge}
-      </div>
-      <GoldRule my={0} />
-      <nav style={{ flex:1,paddingTop:6,overflowY:"auto" }}>
-        {navSections.map((section,si)=>(
-          <div key={si}>
-            {section.label && <div className="nav-section">{section.label}</div>}
-            {section.items.map(item=>(
-              <div key={item.key} className={`nav-item ${item.active?"active":""}`} onClick={item.onClick}>
-                {item.icon && <span style={{ fontSize:12,opacity:0.7 }}>{item.icon}</span>}
-                {item.label}
-                {item.badge && <span style={{ marginLeft:"auto",background:"rgba(201,168,76,0.18)",color:C.gold,fontSize:9,fontWeight:700,padding:"1px 6px",borderRadius:8 }}>{item.badge}</span>}
-              </div>
-            ))}
-          </div>
-        ))}
-      </nav>
-      <div style={{ padding:"14px 20px",borderTop:`1px solid ${C.goldBorder}` }}>
-        {savedIndicator && <div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,color:C.gold,letterSpacing:"0.1em",textAlign:"center",marginBottom:10 }}>✓ Saved</div>}
-        <button className="btn-ghost" onClick={onLogout} style={{ width:"100%",fontSize:10 }}>Sign Out</button>
-      </div>
-    </div>
+    </>
   );
 }
 
@@ -591,6 +624,12 @@ function CalendarView({ client, isAdmin, session, onUpdate }) {
             <div>
               <div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted,marginBottom:5 }}>{fmtDate(selected.data.date)} · {selected.data.time}</div>
               {selected.data.description&&<div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:16,color:C.dim,margin:"12px 0",lineHeight:1.65 }}>{selected.data.description}</div>}
+              {selected.data.agenda&&<>
+                <div style={{ padding:"12px 16px",background:"rgba(201,168,76,0.05)",border:`1px solid rgba(201,168,76,0.15)`,marginBottom:12 }}>
+                  <div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.gold,marginBottom:8 }}>Agenda</div>
+                  {selected.data.agenda.split("·").map((item,i)=>item.trim()&&<div key={i} style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.dim,marginBottom:4 }}>→ {item.trim()}</div>)}
+                </div>
+              </>}
               <GoldRule my={16}/>
               <Label>Messages</Label>
               <div style={{ maxHeight:220,overflowY:"auto",marginBottom:12 }}>
@@ -616,6 +655,163 @@ function CalendarView({ client, isAdmin, session, onUpdate }) {
       )}
       {showAddMeeting&&isAdmin&&(
         <MeetingModal onClose={()=>setShowAddMeeting(false)} onSave={m=>{onUpdate({...client,meetings:[...(client.meetings||[]),m]});setShowAddMeeting(false);}}/>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// HOME VIEW (client dashboard)
+// ─────────────────────────────────────────────────────────────
+function HomeView({ client, session, onUpdate, newSince, onNavigate }) {
+  const pending=client.contentCalendar.filter(i=>i.approvalStatus==="Pending Approval").length;
+  const unread=(client.directMessages||[]).filter(m=>m.from!==session.username&&m.from==="mikaela").length;
+  const recentWins=[...client.publicationLog].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,3);
+  const nextMeeting=[...(client.meetings||[])].filter(m=>m.date>=todayStr()).sort((a,b)=>a.date.localeCompare(b.date))[0];
+  const hasNewItems=newSince.content>0||newSince.docs>0||newSince.messages>0;
+  return (
+    <div className="ks-up">
+      {/* Welcome message */}
+      {client.welcomeMessage&&(
+        <div style={{ padding:"28px 32px",background:`linear-gradient(135deg,rgba(201,168,76,0.07),rgba(201,168,76,0.03))`,border:`1px solid rgba(201,168,76,0.2)`,marginBottom:32,position:"relative" }}>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontWeight:300,fontSize:20,color:C.dim,lineHeight:1.8,marginBottom:14 }}>"{client.welcomeMessage}"</div>
+          <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.gold }}>— Mikaela</div>
+        </div>
+      )}
+      {/* Since last visit */}
+      {hasNewItems&&(
+        <div style={{ display:"flex",gap:10,alignItems:"center",padding:"12px 18px",background:"rgba(130,208,130,0.05)",border:"1px solid rgba(130,208,130,0.2)",marginBottom:28,flexWrap:"wrap" }}>
+          <span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:"#82d082" }}>Since your last visit —</span>
+          {newSince.content>0&&<span style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.dim }}>{newSince.content} new content piece{newSince.content>1?"s":""}</span>}
+          {newSince.docs>0&&<span style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.dim }}>{newSince.docs} new document{newSince.docs>1?"s":""}</span>}
+          {newSince.messages>0&&<span style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.dim }}>{newSince.messages} new message{newSince.messages>1?"s":""}</span>}
+        </div>
+      )}
+      {/* Action items */}
+      {(pending>0||unread>0)&&(
+        <div style={{ marginBottom:32 }}>
+          <Label>Action Required</Label>
+          <div style={{ display:"flex",gap:10,flexWrap:"wrap" }}>
+            {pending>0&&<button onClick={()=>onNavigate("content")} style={{ display:"flex",alignItems:"center",gap:10,padding:"14px 20px",background:"rgba(201,168,76,0.08)",border:`1px solid rgba(201,168,76,0.25)`,cursor:"pointer",flex:1,minWidth:180,textAlign:"left" }}>
+              <span style={{ fontFamily:"'Playfair Display',serif",fontSize:26,color:C.gold,lineHeight:1 }}>{pending}</span>
+              <div><div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",color:C.gold }}>Awaiting Approval</div><div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,marginTop:2 }}>Review content →</div></div>
+            </button>}
+            {unread>0&&<button onClick={()=>onNavigate("messages")} style={{ display:"flex",alignItems:"center",gap:10,padding:"14px 20px",background:"rgba(130,208,130,0.06)",border:"1px solid rgba(130,208,130,0.2)",cursor:"pointer",flex:1,minWidth:180,textAlign:"left" }}>
+              <span style={{ fontFamily:"'Playfair Display',serif",fontSize:26,color:"#82d082",lineHeight:1 }}>{unread}</span>
+              <div><div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",color:"#82d082" }}>New Message{unread>1?"s":""}</div><div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,marginTop:2 }}>From Mikaela →</div></div>
+            </button>}
+          </div>
+        </div>
+      )}
+      {/* Next meeting */}
+      {nextMeeting&&(
+        <div style={{ marginBottom:32 }}>
+          <Label>Next Meeting</Label>
+          <div onClick={()=>onNavigate("calendar")} style={{ padding:"16px 20px",background:C.surface,border:`1px solid ${C.goldBorder}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",gap:16 }}>
+            <div>
+              <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:19,color:C.text,marginBottom:4 }}>{nextMeeting.title}</div>
+              <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted }}>{fmtDate(nextMeeting.date)} · {nextMeeting.time}</div>
+              {nextMeeting.agenda&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.dim,marginTop:5 }}>Agenda: {nextMeeting.agenda.split("·")[0].trim()}{nextMeeting.agenda.includes("·")?" …":""}</div>}
+            </div>
+            <span style={{ color:C.gold,fontSize:20 }}>◷</span>
+          </div>
+        </div>
+      )}
+      <GoldRule/>
+      {/* Recent wins */}
+      {recentWins.length>0&&(
+        <div style={{ marginTop:28 }}>
+          <Label>Recent Wins</Label>
+          {recentWins.map(p=>(
+            <div key={p.id} style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 0",borderBottom:`1px solid rgba(255,255,255,0.05)` }}>
+              <div>
+                <span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,color:C.gold,marginRight:10 }}>{p.outlet}</span>
+                <span style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.dim }}>{p.title}</span>
+              </div>
+              <span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,whiteSpace:"nowrap",marginLeft:12 }}>{fmtDate(p.date)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {!client.welcomeMessage&&!nextMeeting&&recentWins.length===0&&pending===0&&(
+        <EmptyState message="Your portal home will fill in as your engagement gets underway." icon="◈"/>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// DIRECT MESSAGES VIEW
+// ─────────────────────────────────────────────────────────────
+function DirectMessagesView({ client, session, onUpdate }) {
+  const [newMsg,setNewMsg]=useState("");
+  const msgs=client.directMessages||[];
+  const endRef=useRef(null);
+  useEffect(()=>{ endRef.current?.scrollIntoView({behavior:"smooth"}); },[msgs.length]);
+  const send=()=>{
+    if(!newMsg.trim()) return;
+    const msg={id:uid(),from:session.username,text:newMsg.trim(),ts:new Date().toISOString()};
+    onUpdate({...client,directMessages:[...msgs,msg]});
+    setNewMsg("");
+  };
+  const isAdmin=session.role==="admin";
+  return (
+    <div className="ks-up">
+      <SectionHeading sub={isAdmin?"Your direct line with "+client.name:"Your direct line with Mikaela"}>Messages</SectionHeading>
+      <div style={{ minHeight:300,maxHeight:520,overflowY:"auto",marginBottom:16,display:"flex",flexDirection:"column",gap:0 }}>
+        {msgs.length===0&&<EmptyState message="This is your private message thread. Start a conversation." icon="◇"/>}
+        {msgs.map(msg=>{
+          const mine=msg.from===session.username;
+          return (
+            <div key={msg.id} className={`msg ${mine?"mine":"theirs"}`}>
+              <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:mine?C.gold:"rgba(255,255,255,0.55)",marginBottom:4,fontWeight:700,letterSpacing:"0.06em" }}>{mine?"You":msg.from==="mikaela"?"Mikaela":client.name}</div>
+              <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.text,lineHeight:1.6 }}>{msg.text}</div>
+              <div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,color:C.muted,marginTop:5 }}>{fmtTs(msg.ts)}</div>
+            </div>
+          );
+        })}
+        <div ref={endRef}/>
+      </div>
+      <div style={{ display:"flex",gap:8 }}>
+        <textarea className="ks-field" value={newMsg} onChange={e=>setNewMsg(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}}} placeholder="Write a message… (Enter to send, Shift+Enter for new line)" style={{ flex:1,resize:"none",minHeight:48 }} rows={2}/>
+        <button className="btn-gold" onClick={send} style={{ padding:"10px 18px",alignSelf:"flex-end" }}>Send</button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// MEDIA PLAYBOOK VIEW (client-read)
+// ─────────────────────────────────────────────────────────────
+function MediaPlaybookView({ client }) {
+  const pb=client.mediaPlaybook||{sections:[]};
+  const [open,setOpen]=useState({});
+  const toggle=id=>setOpen(p=>({...p,[id]:!p[id]}));
+  return (
+    <div className="ks-up">
+      <SectionHeading sub="Your guide to navigating media situations — know exactly what to do when it matters">Media Playbook</SectionHeading>
+      {pb.sections.length===0?(
+        <EmptyState message="Your Media Playbook will be built out by Mikaela. It covers how to handle journalist inquiries, content questions, and anything that comes up in the public eye." icon="◎"/>
+      ):(
+        <div>
+          <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.dim,lineHeight:1.7,marginBottom:28,fontStyle:"italic" }}>
+            When something unexpected comes up — a journalist, a comment, an opportunity — this is your first reference. When in doubt, contact Mikaela before responding.
+          </div>
+          {pb.sections.map(s=>(
+            <div key={s.id} style={{ marginBottom:10,border:`1px solid ${open[s.id]?C.goldBorder:"rgba(255,255,255,0.07)"}`,transition:"border-color 0.2s" }}>
+              <button onClick={()=>toggle(s.id)} style={{ width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"18px 22px",background:"none",border:"none",cursor:"pointer",textAlign:"left" }}>
+                <span style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:18,color:open[s.id]?C.goldL:C.text,fontWeight:400,transition:"color 0.2s" }}>{s.title}</span>
+                <span style={{ color:C.gold,fontSize:14,marginLeft:16,flexShrink:0,transform:open[s.id]?"rotate(90deg)":"none",transition:"transform 0.2s" }}>›</span>
+              </button>
+              {open[s.id]&&(
+                <div className="ks-in" style={{ padding:"0 22px 22px" }}>
+                  <GoldRule my={0}/>
+                  <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.dim,lineHeight:1.8,whiteSpace:"pre-wrap",marginTop:16 }}>{s.content}</div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -967,7 +1163,7 @@ function BrandVoiceView({ client, isAdmin, onUpdate, apiKey }) {
     { key:"personalProfessional", left:"Professional", right:"Personal" },
   ];
 
-  const voiceTabs=[{key:"voice",label:"Voice Profile"},{key:"explore",label:"Topics to Explore"},{key:"whitespace",label:"White Space Finder"},{key:"tone",label:"Tone Calibration"}];
+  const voiceTabs=[{key:"voice",label:"Voice Profile"},{key:"explore",label:"Topics to Explore"},...((isAdmin||hasInfluence(client.tier))?[{key:"whitespace",label:"White Space Finder"}]:[]),{key:"tone",label:"Tone Calibration"}];
 
   return (
     <div className="ks-up">
@@ -1328,7 +1524,7 @@ function ManuscriptView({ client }) {
 // ADMIN MODALS
 // ─────────────────────────────────────────────────────────────
 function MeetingModal({ entry, onSave, onClose }) {
-  const [form,setForm]=useState(entry||{title:"",date:todayStr(),time:"10:00 AM",description:"",messages:[]});
+  const [form,setForm]=useState(entry||{title:"",date:todayStr(),time:"10:00 AM",description:"",agenda:"",messages:[]});
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
   return (
     <Modal title="Schedule Meeting" onClose={onClose}>
@@ -1337,7 +1533,8 @@ function MeetingModal({ entry, onSave, onClose }) {
         <FormRow label="Date"><input className="ks-field" type="date" value={form.date} onChange={e=>set("date",e.target.value)}/></FormRow>
         <FormRow label="Time"><input className="ks-field" value={form.time} onChange={e=>set("time",e.target.value)} placeholder="10:00 AM"/></FormRow>
       </div>
-      <FormRow label="Description / Agenda"><textarea className="ks-field" rows={3} value={form.description} onChange={e=>set("description",e.target.value)} placeholder="What will you cover?"/></FormRow>
+      <FormRow label="Description / Overview"><textarea className="ks-field" rows={2} value={form.description} onChange={e=>set("description",e.target.value)} placeholder="What will you cover?"/></FormRow>
+      <FormRow label="Agenda / Talking Points" hint="Visible to client — they can reference this before the call"><textarea className="ks-field" rows={3} value={form.agenda||""} onChange={e=>set("agenda",e.target.value)} placeholder="e.g. Review February results · Set Q2 content priorities · Discuss podcast strategy"/></FormRow>
       <div style={{ display:"flex",gap:10,marginTop:8 }}><button className="btn-gold" onClick={()=>onSave({...form,id:form.id||uid()})} disabled={!form.title}>Save</button><button className="btn-ghost" onClick={onClose}>Cancel</button></div>
     </Modal>
   );
@@ -1744,6 +1941,79 @@ function AdminClientEditor({ client, users, onUpdate, activeSection, onSectionCh
     </div>
   );
 
+  // ── Admin Notes ──
+  const AdminNotesSection=()=>{
+    const [notes,setNotes]=useState(client.adminNotes||"");
+    return (
+      <div>
+        <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,marginBottom:18,fontStyle:"italic" }}>Private notes — only visible to you. Never shown to the client.</div>
+        <FormRow label="Notes"><textarea className="ks-field" rows={10} value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Relationship context, things to remember before calls, personal details, strategic observations…"/></FormRow>
+        <button className="btn-gold" onClick={()=>update({adminNotes:notes})}>Save Notes</button>
+      </div>
+    );
+  };
+
+  // ── Direct Messages ──
+  const MessagesSection=()=><DirectMessagesView client={client} session={{ username:"mikaela",role:"admin" }} onUpdate={onUpdate}/>;
+
+  // ── Media Playbook (admin edit) ──
+  const PlaybookSection=()=>{
+    const pb=client.mediaPlaybook||{sections:[]};
+    const [editSec,setEditSec]=useState(null);
+    const [form,setForm]=useState({title:"",content:""});
+    const openEdit=s=>{ setEditSec(s?.id||"new"); setForm(s?{title:s.title,content:s.content}:{title:"",content:""}); };
+    const saveSec=()=>{
+      if(!form.title.trim()) return;
+      const s={...form,id:editSec==="new"?uid():editSec};
+      const sections=editSec==="new"?[...pb.sections,s]:pb.sections.map(x=>x.id===editSec?s:x);
+      update({mediaPlaybook:{...pb,sections}});
+      setEditSec(null);
+    };
+    return (
+      <div>
+        <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,marginBottom:16,fontStyle:"italic" }}>Write guidance for your client to reference when media situations arise. They see this in an accordion — each section expands on click.</div>
+        <div style={{ display:"flex",justifyContent:"flex-end",marginBottom:20 }}><button className="btn-ghost" onClick={()=>openEdit(null)}>+ Add Section</button></div>
+        {!pb.sections.length?<EmptyState message="No playbook sections yet." icon="◎"/>:(
+          pb.sections.map(s=>(
+            <div key={s.id} style={{ padding:"14px 18px",background:C.surface,border:`1px solid ${C.goldBorder}`,marginBottom:8,display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:16 }}>
+              <div style={{ flex:1 }}>
+                <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:17,color:C.text,marginBottom:4 }}>{s.title}</div>
+                <div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted,lineHeight:1.55,whiteSpace:"pre-wrap" }}>{s.content.length>120?s.content.slice(0,120)+"…":s.content}</div>
+              </div>
+              <div style={{ display:"flex",gap:6,flexShrink:0 }}>
+                <button className="btn-sm" onClick={()=>openEdit(s)}>Edit</button>
+                <button className="btn-del" onClick={()=>update({mediaPlaybook:{...pb,sections:pb.sections.filter(x=>x.id!==s.id)}})}>Del</button>
+              </div>
+            </div>
+          ))
+        )}
+        {editSec&&(
+          <Modal title={editSec==="new"?"Add Playbook Section":"Edit Playbook Section"} onClose={()=>setEditSec(null)} wide>
+            <FormRow label="Section Title"><input className="ks-field" value={form.title} onChange={e=>setForm(f=>({...f,title:e.target.value}))} placeholder="e.g. If a journalist contacts you"/></FormRow>
+            <FormRow label="Guidance" hint="Write clearly and directly. The client will read this under pressure."><textarea className="ks-field" rows={10} value={form.content} onChange={e=>setForm(f=>({...f,content:e.target.value}))} placeholder="What should they do? What should they say?"/></FormRow>
+            <div style={{ display:"flex",gap:10,marginTop:8 }}><button className="btn-gold" onClick={saveSec} disabled={!form.title.trim()}>Save</button><button className="btn-ghost" onClick={()=>setEditSec(null)}>Cancel</button></div>
+          </Modal>
+        )}
+      </div>
+    );
+  };
+
+  // ── Welcome Message ──
+  const WelcomeSection=()=>{
+    const [msg,setMsg]=useState(client.welcomeMessage||"");
+    return (
+      <div>
+        <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,marginBottom:18,fontStyle:"italic" }}>This message appears at the top of the client's home screen. Make it personal.</div>
+        <FormRow label="Welcome Message" hint="Write in first person. The portal signs it '— Mikaela' automatically."><textarea className="ks-field" rows={5} value={msg} onChange={e=>setMsg(e.target.value)} placeholder="Write something personal and specific to this client's journey…"/></FormRow>
+        {msg&&<div style={{ padding:"16px 20px",background:"rgba(201,168,76,0.05)",border:`1px solid rgba(201,168,76,0.15)`,marginBottom:18 }}>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:17,color:C.dim,lineHeight:1.8 }}>"{msg}"</div>
+          <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",color:C.gold,marginTop:10 }}>— Mikaela</div>
+        </div>}
+        <button className="btn-gold" onClick={()=>update({welcomeMessage:msg})}>Save Message</button>
+      </div>
+    );
+  };
+
   // ── Settings ──
   const SettingsSection=()=>{
     const [form,setForm]=useState({name:client.name,tier:client.tier});
@@ -1757,7 +2027,7 @@ function AdminClientEditor({ client, users, onUpdate, activeSection, onSectionCh
     );
   };
 
-  const sections={ content:<ContentSection/>,calendar:<CalendarSection/>,report:<ReportSection/>,linkedin:<LinkedInSection/>,publications:<PubsSection/>,milestones:<MilestonesSection/>,strategy:<StrategySection/>,ai:<AISection/>,manuscript:<ManuscriptSection/>,timeline:<TimelineSection/>,voice:<BrandVoiceView client={client} isAdmin={true} onUpdate={onUpdate} apiKey={apiKey}/>,documents:<DocumentsView client={client} session={{ username:"mikaela",role:"admin" }} onUpdate={onUpdate}/>,settings:<SettingsSection/> };
+  const sections={ content:<ContentSection/>,calendar:<CalendarSection/>,report:<ReportSection/>,linkedin:<LinkedInSection/>,publications:<PubsSection/>,milestones:<MilestonesSection/>,strategy:<StrategySection/>,ai:<AISection/>,manuscript:<ManuscriptSection/>,timeline:<TimelineSection/>,voice:<BrandVoiceView client={client} isAdmin={true} onUpdate={onUpdate} apiKey={apiKey}/>,documents:<DocumentsView client={client} session={{ username:"mikaela",role:"admin" }} onUpdate={onUpdate}/>,messages:<MessagesSection/>,playbook:<PlaybookSection/>,welcome:<WelcomeSection/>,notes:<AdminNotesSection/>,settings:<SettingsSection/> };
 
   return (
     <div className="ks-in" style={{ padding:"44px 52px",maxWidth:880 }}>
@@ -1777,18 +2047,40 @@ function AdminClientEditor({ client, users, onUpdate, activeSection, onSectionCh
 // CLIENT DASHBOARD
 // ─────────────────────────────────────────────────────────────
 function ClientDashboard({ client, session, onLogout, onUpdate, apiKey }) {
-  const [view,setView]=useState("calendar");
+  const [view,setView]=useState("home");
+  const [mobOpen,setMobOpen]=useState(false);
+  const [newSince,setNewSince]=useState({content:0,docs:0,messages:0});
   const branding=isBranding(client.tier);
   const manuscript=isManuscript(client.tier);
   const authority=hasAuthority(client.tier);
   const influence=hasInfluence(client.tier);
 
+  useEffect(()=>{
+    try {
+      const key=`ks-lastvisit-${client.id}`;
+      const last=localStorage.getItem(key);
+      if(last){
+        const t=new Date(last);
+        const nc=client.contentCalendar.filter(i=>i.addedAt&&new Date(i.addedAt)>t).length;
+        const nd=(client.documents||[]).filter(d=>d.uploadedBy==="mikaela"&&d.uploadedAt&&new Date(d.uploadedAt)>t).length;
+        const nm=(client.directMessages||[]).filter(m=>m.from==="mikaela"&&new Date(m.ts)>t).length;
+        setNewSince({content:nc,docs:nd,messages:nm});
+      }
+      localStorage.setItem(key,new Date().toISOString());
+    } catch{}
+  },[]);
+
   const pendingApprovals=client.contentCalendar.filter(i=>i.approvalStatus==="Pending Approval").length;
   const unreadMessages=(client.meetings||[]).reduce((n,m)=>(m.messages||[]).filter(msg=>msg.from!==session.username).length>0?n+1:n,0);
+  const newDirectMsgs=(client.directMessages||[]).filter(m=>m.from==="mikaela").length;
   const unansweredIdeas=((client.brandVoice?.exploreIdeas)||[]).filter(i=>!i.hasResponse).length;
 
   const navSections=[
-    { items:[{ key:"calendar",label:"Calendar",icon:"◷",active:view==="calendar",onClick:()=>setView("calendar"),badge:unreadMessages||null }] },
+    { items:[
+      { key:"home",label:"Home",icon:"◈",active:view==="home",onClick:()=>setView("home") },
+      { key:"messages",label:"Messages",icon:"◇",active:view==="messages",onClick:()=>setView("messages"),badge:newSince.messages>0?newSince.messages:null },
+      { key:"calendar",label:"Calendar",icon:"◷",active:view==="calendar",onClick:()=>setView("calendar"),badge:unreadMessages||null },
+    ]},
     ...(branding?[{ label:"Content",items:[
       { key:"content",label:"Content",icon:"◈",active:view==="content",onClick:()=>setView("content"),badge:pendingApprovals||null },
       { key:"performance",label:"Performance",active:view==="performance",onClick:()=>setView("performance") },
@@ -1804,6 +2096,7 @@ function ClientDashboard({ client, session, onLogout, onUpdate, apiKey }) {
     ...(manuscript?[{ label:"Manuscript",items:[{ key:"manuscript",label:"Manuscript",active:view==="manuscript",onClick:()=>setView("manuscript") }]}]:[]),
     { label:"Your Space",items:[
       { key:"voice",label:"Brand Voice",icon:"◇",active:view==="voice",onClick:()=>setView("voice"),badge:unansweredIdeas||null },
+      { key:"playbook",label:"Media Playbook",active:view==="playbook",onClick:()=>setView("playbook") },
       { key:"timeline",label:"Results Timeline",active:view==="timeline",onClick:()=>setView("timeline") },
       { key:"documents",label:"Documents",active:view==="documents",onClick:()=>setView("documents") },
     ]},
@@ -1812,6 +2105,8 @@ function ClientDashboard({ client, session, onLogout, onUpdate, apiKey }) {
   const renderView=()=>{
     const p={client,session,isAdmin:false,onUpdate,apiKey};
     switch(view){
+      case "home": return <HomeView client={client} session={session} onUpdate={onUpdate} newSince={newSince} onNavigate={setView}/>;
+      case "messages": return <DirectMessagesView client={client} session={session} onUpdate={onUpdate}/>;
       case "calendar": return <CalendarView {...p}/>;
       case "content": return <ContentView {...p}/>;
       case "performance": return <PerformanceView client={client}/>;
@@ -1821,6 +2116,7 @@ function ClientDashboard({ client, session, onLogout, onUpdate, apiKey }) {
       case "ai": return <AIVisibilityView client={client}/>;
       case "manuscript": return <ManuscriptView client={client}/>;
       case "voice": return <BrandVoiceView {...p}/>;
+      case "playbook": return <MediaPlaybookView client={client}/>;
       case "timeline": return <TimelineView client={client}/>;
       case "documents": return <DocumentsView {...p}/>;
       default: return null;
@@ -1829,7 +2125,10 @@ function ClientDashboard({ client, session, onLogout, onUpdate, apiKey }) {
 
   return (
     <div style={{ display:"flex",minHeight:"100vh",background:C.bg }}>
-      <Sidebar logo="Client Portal" name={client.name} badge={<TierChip tier={client.tier}/>} navSections={navSections} onLogout={onLogout}/>
+      <button className="mob-menu-btn" onClick={()=>setMobOpen(true)}>☰</button>
+      <div className={`sidebar${mobOpen?" mob-open":""}`}>
+        <Sidebar logo="Client Portal" name={client.name} badge={<TierChip tier={client.tier}/>} navSections={navSections} onLogout={onLogout} mobileOpen={mobOpen} onMobileClose={()=>setMobOpen(false)}/>
+      </div>
       <div style={{ flex:1,overflow:"auto" }}>
         <div style={{ padding:"44px 52px",maxWidth:860 }}>{renderView()}</div>
       </div>
@@ -1880,10 +2179,18 @@ function AdminDashboard({ clients, users, onUpdateClient, onAddClient, onLogout 
       ...(m?[{ label:"Manuscript",items:[{ key:"manuscript",label:"Manuscript",active:activeSection==="manuscript",onClick:()=>setActiveSection("manuscript") }]}]:[]),
       { label:"Resources",items:[
         { key:"voice",label:"Brand Voice",active:activeSection==="voice",onClick:()=>setActiveSection("voice") },
+        { key:"playbook",label:"Media Playbook",active:activeSection==="playbook",onClick:()=>setActiveSection("playbook") },
         { key:"timeline",label:"Timeline",active:activeSection==="timeline",onClick:()=>setActiveSection("timeline") },
         { key:"documents",label:"Documents",active:activeSection==="documents",onClick:()=>setActiveSection("documents") },
       ]},
-      { label:"",items:[{ key:"settings",label:"Settings",active:activeSection==="settings",onClick:()=>setActiveSection("settings") }] },
+      { label:"Communication",items:[
+        { key:"messages",label:"Direct Messages",active:activeSection==="messages",onClick:()=>setActiveSection("messages") },
+      ]},
+      { label:"Admin",items:[
+        { key:"welcome",label:"Welcome Message",active:activeSection==="welcome",onClick:()=>setActiveSection("welcome") },
+        { key:"notes",label:"Private Notes",active:activeSection==="notes",onClick:()=>setActiveSection("notes") },
+        { key:"settings",label:"Settings",active:activeSection==="settings",onClick:()=>setActiveSection("settings") },
+      ]},
     ];
     return ns;
   };
@@ -1900,6 +2207,7 @@ function AdminDashboard({ clients, users, onUpdateClient, onAddClient, onLogout 
   return (
     <div style={{ display:"flex",minHeight:"100vh",background:C.bg }}>
       {/* SIDEBAR */}
+      <button className="mob-menu-btn" onClick={()=>document.querySelector('.sidebar')?.classList.toggle('mob-open')}>☰</button>
       <Sidebar
         logo="Admin Portal"
         name="Mikaela Ashcroft"
