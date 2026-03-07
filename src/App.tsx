@@ -473,6 +473,7 @@ function CalendarView({ client, isAdmin, session, onUpdate }) {
   const evForDay = d => ({
     content: client.contentCalendar.filter(i=>i.scheduledDate===ds(d)),
     meetings: (client.meetings||[]).filter(m=>m.date===ds(d)),
+    milestones: isAdmin ? (client.milestones||[]).filter(m=>m.completionDate===ds(d)) : [],
   });
 
   const statusColor = s => s==="Published"?C.gold:s==="In Review"?"#d4b860":"rgba(255,255,255,0.5)";
@@ -481,6 +482,7 @@ function CalendarView({ client, isAdmin, session, onUpdate }) {
     if(!_drag||!d||!isAdmin) return;
     const dateStr = ds(d);
     if(_drag.type==="content") onUpdate({...client,contentCalendar:client.contentCalendar.map(i=>i.id===_drag.id?{...i,scheduledDate:dateStr}:i)});
+    else if(_drag.type==="milestone") onUpdate({...client,milestones:(client.milestones||[]).map(m=>m.id===_drag.id?{...m,completionDate:dateStr}:m)});
     else onUpdate({...client,meetings:(client.meetings||[]).map(m=>m.id===_drag.id?{...m,date:dateStr}:m)});
     _drag=null; setDragOver(null);
   };
@@ -505,7 +507,7 @@ function CalendarView({ client, isAdmin, session, onUpdate }) {
         </div>
       </div>
       <div style={{ display:"flex",gap:16,marginBottom:14,flexWrap:"wrap" }}>
-        {[["Content",C.gold],["Meeting","#7a9aaf"]].map(([l,c])=>(
+        {[["Content",C.gold],["Meeting","#7a9aaf"],...(isAdmin?[["Milestone","#82d082"]]:[])] .map(([l,c])=>(
           <div key={l} style={{ display:"flex",alignItems:"center",gap:6 }}>
             <div style={{ width:8,height:8,background:c,opacity:0.8 }} />
             <span style={{ fontFamily:"'Lato',sans-serif",fontSize:10,color:C.muted,letterSpacing:"0.1em",textTransform:"uppercase" }}>{l}</span>
@@ -528,7 +530,7 @@ function CalendarView({ client, isAdmin, session, onUpdate }) {
           const dateStr=ds(d);
           const isToday=dateStr===today;
           const isDragOver=dragOver===dateStr;
-          const {content,meetings}=d?evForDay(d):{content:[],meetings:[]};
+          const {content,meetings,milestones}=d?evForDay(d):{content:[],meetings:[],milestones:[]};
           return (
             <div key={i} className={`cal-cell${!d?" other-month":""}${isToday?" today":""}${isDragOver?" drag-over":""}`}
               onDragOver={e=>{if(isAdmin&&d){e.preventDefault();setDragOver(dateStr);}}}
@@ -552,6 +554,14 @@ function CalendarView({ client, isAdmin, session, onUpdate }) {
                     ◷ {m.title}
                   </button>
                 ))}
+                {milestones.map(m=>(
+                  <button key={m.id} className="cal-event" draggable={true}
+                    onDragStart={e=>{_drag={type:"milestone",id:m.id};e.dataTransfer.effectAllowed="move";}}
+                    onClick={()=>setSelected({type:"milestone",data:m})}
+                    style={{ background:"rgba(130,208,130,0.1)",color:"#82d082",border:"1px solid rgba(130,208,130,0.22)" }}>
+                    ◆ {m.name}
+                  </button>
+                ))}
               </>}
             </div>
           );
@@ -559,13 +569,23 @@ function CalendarView({ client, isAdmin, session, onUpdate }) {
       </div>
 
       {selected && (
-        <Modal title={selected.type==="meeting"?"◷ "+selected.data.title:selected.data.title} onClose={()=>setSelected(null)}>
+        <Modal title={selected.type==="meeting"?"◷ "+selected.data.title:selected.type==="milestone"?"◆ "+selected.data.name:selected.data.title} onClose={()=>setSelected(null)}>
           {selected.type==="content" ? (
             <div>
               <div style={{ display:"flex",gap:8,marginBottom:14 }}><StatusBadge status={selected.data.status}/><StatusBadge status={selected.data.approvalStatus||"Pending Approval"}/></div>
               <div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted,marginBottom:8 }}>{selected.data.type} · {fmtDate(selected.data.scheduledDate)}</div>
               {selected.data.link&&<a href={selected.data.link} target="_blank" rel="noreferrer" style={{ color:C.gold,fontSize:12,fontFamily:"'Lato',sans-serif" }}>View published piece →</a>}
+              {selected.data.imageUrl&&isBranding(client.tier)&&<div style={{ marginTop:12 }}><img src={selected.data.imageUrl} alt="Content visual" style={{ maxWidth:"100%",maxHeight:260,objectFit:"contain",border:`1px solid ${C.goldBorder}` }} onError={e=>{e.target.style.display="none";}} /></div>}
+              {selected.data.body&&<div style={{ marginTop:14,fontFamily:"'Lato',sans-serif",fontSize:13,color:C.dim,lineHeight:1.75,whiteSpace:"pre-wrap",padding:"14px 16px",background:"rgba(255,255,255,0.03)",border:`1px solid rgba(255,255,255,0.07)`,maxHeight:280,overflowY:"auto" }}>{selected.data.body}</div>}
               {selected.data.revisionNotes&&<div style={{ marginTop:14,padding:"12px 14px",background:"rgba(200,100,80,0.08)",border:"1px solid rgba(200,100,80,0.2)",fontFamily:"'Lato',sans-serif",fontSize:13,color:"#d88860",fontStyle:"italic" }}>"{selected.data.revisionNotes}"</div>}
+            </div>
+          ) : selected.type==="milestone" ? (
+            <div>
+              <div style={{ display:"flex",gap:8,marginBottom:14 }}><StatusBadge status={selected.data.status}/></div>
+              <div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted,marginBottom:8 }}>
+                {selected.data.status==="Complete"?"Completed:":"Target date:"} {fmtDate(selected.data.completionDate)||"—"}
+              </div>
+              {isAdmin&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,fontStyle:"italic",marginTop:12 }}>Drag on the calendar to reschedule this milestone.</div>}
             </div>
           ) : (
             <div>
@@ -608,6 +628,9 @@ function ContentView({ client, isAdmin, onUpdate }) {
   const [filter,setFilter]=useState("All");
   const [revModal,setRevModal]=useState(null);
   const [revNote,setRevNote]=useState("");
+  const [expanded,setExpanded]=useState({});
+  const toggleExpand=id=>setExpanded(p=>({...p,[id]:!p[id]}));
+  const isFoundation=client.tier==="foundation";
   const items=filter==="All"?client.contentCalendar:client.contentCalendar.filter(i=>i.status===filter||i.approvalStatus===filter);
   const updateItem=(id,patch)=>onUpdate({...client,contentCalendar:client.contentCalendar.map(i=>i.id===id?{...i,...patch}:i)});
   const pendingCount=client.contentCalendar.filter(i=>i.approvalStatus==="Pending Approval").length;
@@ -650,9 +673,25 @@ function ContentView({ client, isAdmin, onUpdate }) {
               </div>
               <div style={{ display:"flex",gap:6,flexShrink:0,flexWrap:"wrap",alignItems:"center" }}>
                 {item.link&&<a href={item.link} target="_blank" rel="noreferrer" className="btn-sm" style={{ textDecoration:"none" }}>View</a>}
-                {!isAdmin&&item.approvalStatus!=="Approved"&&<><button className="btn-approve" onClick={()=>updateItem(item.id,{approvalStatus:"Approved",revisionNotes:""})}>Approve</button><button className="btn-revise" onClick={()=>{setRevModal(item);setRevNote("");}}>Revision</button></>}
+                {item.body&&<button className="btn-sm" onClick={()=>toggleExpand(item.id)}>{expanded[item.id]?"Hide ↑":"Read ↓"}</button>}
+                {!isAdmin&&!isFoundation&&item.approvalStatus!=="Approved"&&<><button className="btn-approve" onClick={()=>updateItem(item.id,{approvalStatus:"Approved",revisionNotes:""})}>Approve</button><button className="btn-revise" onClick={()=>{setRevModal(item);setRevNote("");}}>Revision</button></>}
               </div>
             </div>
+            {expanded[item.id]&&(
+              <div className="ks-in" style={{ marginTop:16 }}>
+                {item.imageUrl&&isBranding(client.tier)&&(
+                  <div style={{ marginBottom:14 }}>
+                    <img src={item.imageUrl} alt="Content visual" style={{ maxWidth:"100%",maxHeight:320,objectFit:"contain",border:`1px solid ${C.goldBorder}`,display:"block" }}
+                      onError={e=>{e.target.style.display="none";}}/>
+                  </div>
+                )}
+                {item.body&&(
+                  <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.dim,lineHeight:1.75,whiteSpace:"pre-wrap",padding:"18px 20px",background:"rgba(255,255,255,0.03)",border:`1px solid rgba(255,255,255,0.07)`,borderRadius:1 }}>
+                    {item.body}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         ))
       )}
@@ -1305,10 +1344,10 @@ function MeetingModal({ entry, onSave, onClose }) {
 }
 
 function ContentModal({ entry, onSave, onClose }) {
-  const [form,setForm]=useState(entry||{title:"",type:"LinkedIn Post",status:"In Progress",approvalStatus:"Pending Approval",revisionNotes:"",scheduledDate:"",link:""});
+  const [form,setForm]=useState(entry||{title:"",type:"LinkedIn Post",status:"In Progress",approvalStatus:"Pending Approval",revisionNotes:"",scheduledDate:"",link:"",body:"",imageUrl:""});
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
   return (
-    <Modal title={entry?"Edit Content":"Add Content"} onClose={onClose}>
+    <Modal title={entry?"Edit Content":"Add Content"} onClose={onClose} wide>
       <FormRow label="Title"><input className="ks-field" value={form.title} onChange={e=>set("title",e.target.value)} placeholder="Content title"/></FormRow>
       <FormRow label="Type"><select className="ks-field" value={form.type} onChange={e=>set("type",e.target.value)}>{CONTENT_TYPES.map(t=><option key={t}>{t}</option>)}</select></FormRow>
       <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12 }}>
@@ -1316,7 +1355,9 @@ function ContentModal({ entry, onSave, onClose }) {
         <FormRow label="Approval"><select className="ks-field" value={form.approvalStatus} onChange={e=>set("approvalStatus",e.target.value)}>{APPROVAL_STATUSES.map(s=><option key={s}>{s}</option>)}</select></FormRow>
       </div>
       <FormRow label="Scheduled Date"><input className="ks-field" type="date" value={form.scheduledDate} onChange={e=>set("scheduledDate",e.target.value)}/></FormRow>
-      <FormRow label="Link (optional)"><input className="ks-field" value={form.link} onChange={e=>set("link",e.target.value)} placeholder="https://…"/></FormRow>
+      <FormRow label="Published Link (optional)"><input className="ks-field" value={form.link} onChange={e=>set("link",e.target.value)} placeholder="https://…"/></FormRow>
+      <FormRow label="Image URL (optional)" hint="Link to a hosted image — Google Drive, Dropbox, Imgur, etc."><input className="ks-field" value={form.imageUrl||""} onChange={e=>set("imageUrl",e.target.value)} placeholder="https://…"/></FormRow>
+      <FormRow label="Content Body" hint="Full post, article, or newsletter — clients will see a Read button to expand this"><textarea className="ks-field" rows={10} value={form.body||""} onChange={e=>set("body",e.target.value)} placeholder="Paste the full post or article text here…"/></FormRow>
       <div style={{ display:"flex",gap:10,marginTop:8 }}><button className="btn-gold" onClick={()=>onSave({...form,id:form.id||uid()})}>Save</button><button className="btn-ghost" onClick={onClose}>Cancel</button></div>
     </Modal>
   );
