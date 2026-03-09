@@ -67,13 +67,14 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 
     /* Calendar */
     .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:1px; background:rgba(201,168,76,0.08); }
-    .cal-cell { background:#180013; min-height:100px; padding:6px; vertical-align:top; transition:background 0.15s; position:relative; }
+    .cal-cell { background:#180013; height:110px; padding:6px; vertical-align:top; transition:background 0.15s; position:relative; overflow:hidden; }
     .cal-cell.other-month { background:#130010; }
     .cal-cell.today { background:#1e0018; outline:1px solid rgba(201,168,76,0.35); outline-offset:-1px; }
     .cal-cell.drag-over { background:rgba(201,168,76,0.1) !important; }
-    .cal-event { font-family:'Lato',sans-serif; font-size:10px; letter-spacing:0.03em; padding:3px 7px; margin-bottom:3px; cursor:pointer; border-radius:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:opacity 0.15s; display:block; width:100%; text-align:left; border:none; }
+    .cal-event { font-family:'Lato',sans-serif; font-size:10px; letter-spacing:0.03em; padding:2px 6px; margin-bottom:2px; cursor:pointer; border-radius:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:opacity 0.15s; display:block; width:100%; text-align:left; border:none; max-width:100%; box-sizing:border-box; }
     .cal-event:hover { opacity:0.78; }
-    .cal-day-num { font-family:'Playfair Display',serif; font-size:12px; margin-bottom:5px; display:block; }
+    .cal-day-num { font-family:'Playfair Display',serif; font-size:12px; margin-bottom:4px; display:block; }
+    .cal-more { font-family:'Lato',sans-serif; font-size:9px; color:rgba(255,255,255,0.35); padding:1px 6px; letter-spacing:0.06em; }
 
     /* Tags */
     .tag { display:inline-flex; align-items:center; gap:5px; background:rgba(201,168,76,0.1); border:1px solid rgba(201,168,76,0.22); color:rgba(255,255,255,0.85); font-family:'Lato',sans-serif; font-size:11px; padding:3px 10px; margin:2px; }
@@ -109,7 +110,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
     /* Collapsible nav section header */
     .nav-section-toggle { display:flex; align-items:center; justify-content:space-between; padding:14px 20px 5px; font-family:'Lato',sans-serif; font-size:9px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:rgba(255,255,255,0.25); cursor:pointer; user-select:none; transition:color 0.15s; }
     .nav-section-toggle:hover { color:rgba(255,255,255,0.45); }
-    .nav-section-toggle .toggle-arrow { font-size:8px; transition:transform 0.18s; }
+    .nav-section-toggle .toggle-arrow { font-size:14px; transition:transform 0.22s; line-height:1; }
     .nav-section-toggle.collapsed .toggle-arrow { transform:rotate(-90deg); }
 
     /* Calendar tooltip */
@@ -220,10 +221,11 @@ const mkClient = o => ({
   contentCalendar:[], publicationLog:[], meetings:[],
   performanceReport:{ period:"",engagement:"",reach:"",placements:"",summary:"" },
   milestones:[], chapters:[], estimatedCompletion:"", manuscriptNotes:"",
+  bookTitle:"", bookSubtitle:"", bookGenre:"", bookLogline:"",
   strategyMap:{ phases:[
-    { id:"p1", name:"Foundation", description:"Establish your voice, launch core content, build initial audience.", outcomes:["Consistent posting cadence","First 3 publications","Clear content pillars"], status:"active" },
-    { id:"p2", name:"Authority", description:"Secure marquee placements, grow audience to authority-level.", outcomes:["5+ Tier-1 publications","Speaking inquiries","Newsletter growth"], status:"upcoming" },
-    { id:"p3", name:"Influence", description:"Become the definitive voice in your space.", outcomes:["Book or course launch","Keynote bookings","Revenue attribution"], status:"future" },
+    { id:"p1", name:"Foundation", description:"Establish your voice, launch core content, build initial audience.", status:"active" },
+    { id:"p2", name:"Authority", description:"Secure marquee placements, grow audience to authority-level.", status:"upcoming" },
+    { id:"p3", name:"Influence", description:"Become the definitive voice in your space.", status:"future" },
   ], goals:[] },
   linkedInStats:[],
   aiVisibility:{ score:0, lastUpdated:"", queries:[], suggestions:[] },
@@ -240,6 +242,7 @@ const mkClient = o => ({
   sessionNotes:[],
   writingAssignments:[],
   outreachStats:{ pitchesSent:0, responsesReceived:0, placementsSecured:0, period:"", notes:"" },
+  preferences:{ contactMethod:"messages", timezone:"", displayName:"" },
   ...o,
 });
 
@@ -711,39 +714,51 @@ function CalendarView({ client, isAdmin, session, onUpdate }) {
               onDragOver={e=>{if(isAdmin&&d){e.preventDefault();setDragOver(dateStr);}}}
               onDragLeave={()=>setDragOver(null)}
               onDrop={()=>handleDrop(d)}>
-              {d && <>
-                <span className="cal-day-num" style={{ color:isToday?C.gold:C.muted,fontWeight:isToday?600:400 }}>{d}</span>
-                {content.map(item=>(
-                  <button key={item.id} className="cal-event" draggable={isAdmin}
-                    onDragStart={e=>{_drag={type:"content",id:item.id};e.dataTransfer.effectAllowed="move";}}
-                    onClick={()=>setSelected({type:"content",data:item})}
-                    onMouseEnter={e=>{const r=e.currentTarget.getBoundingClientRect();setTooltip({x:r.left,y:r.bottom+6,content:{title:item.title,sub:`${item.type} · ${item.status}`,note:item.revisionNotes||""}});}}
-                    onMouseLeave={()=>setTooltip(null)}
-                    style={{ background:`${statusColor(item.status)}15`,color:statusColor(item.status),border:`1px solid ${statusColor(item.status)}30` }}>
-                    {item.title}
-                  </button>
-                ))}
-                {meetings.map(m=>(
-                  <button key={m.id} className="cal-event" draggable={isAdmin}
-                    onDragStart={e=>{_drag={type:"meeting",id:m.id};e.dataTransfer.effectAllowed="move";}}
-                    onClick={()=>setSelected({type:"meeting",data:m})}
-                    onMouseEnter={e=>{const r=e.currentTarget.getBoundingClientRect();setTooltip({x:r.left,y:r.bottom+6,content:{title:m.title,sub:m.time?`${m.date} · ${m.time}`:m.date,note:m.description||""}});}}
-                    onMouseLeave={()=>setTooltip(null)}
-                    style={{ background:"rgba(122,154,175,0.14)",color:"#9abacf",border:"1px solid rgba(122,154,175,0.25)" }}>
-                    ◷ {m.title}
-                  </button>
-                ))}
-                {milestones.map(m=>(
-                  <button key={m.id} className="cal-event" draggable={true}
-                    onDragStart={e=>{_drag={type:"milestone",id:m.id};e.dataTransfer.effectAllowed="move";}}
-                    onClick={()=>setSelected({type:"milestone",data:m})}
-                    onMouseEnter={e=>{const r=e.currentTarget.getBoundingClientRect();setTooltip({x:r.left,y:r.bottom+6,content:{title:m.name,sub:`Milestone · ${m.status}`,note:""}});}}
-                    onMouseLeave={()=>setTooltip(null)}
-                    style={{ background:"rgba(130,208,130,0.1)",color:"#82d082",border:"1px solid rgba(130,208,130,0.22)" }}>
-                    ◆ {m.name}
-                  </button>
-                ))}
-              </>}
+              {d && (()=>{
+                const allEvents=[
+                  ...content.map(item=>({type:"content",data:item})),
+                  ...meetings.map(m=>({type:"meeting",data:m})),
+                  ...milestones.map(m=>({type:"milestone",data:m})),
+                ];
+                const visible=allEvents.slice(0,2);
+                const more=allEvents.length-visible.length;
+                return <>
+                  <span className="cal-day-num" style={{ color:isToday?C.gold:C.muted,fontWeight:isToday?600:400 }}>{d}</span>
+                  {visible.map((ev,ei)=>{
+                    if(ev.type==="content"){const item=ev.data;return(
+                      <button key={item.id} className="cal-event" draggable={isAdmin}
+                        onDragStart={e=>{_drag={type:"content",id:item.id};e.dataTransfer.effectAllowed="move";}}
+                        onClick={()=>setSelected({type:"content",data:item})}
+                        onMouseEnter={e=>{const r=e.currentTarget.getBoundingClientRect();setTooltip({x:r.left,y:r.bottom+6,content:{title:item.title,sub:`${item.type} · ${item.status}`,note:item.revisionNotes||""}});}}
+                        onMouseLeave={()=>setTooltip(null)}
+                        style={{ background:`${statusColor(item.status)}15`,color:statusColor(item.status),border:`1px solid ${statusColor(item.status)}30` }}>
+                        {item.title}
+                      </button>
+                    );}
+                    if(ev.type==="meeting"){const m=ev.data;return(
+                      <button key={m.id} className="cal-event" draggable={isAdmin}
+                        onDragStart={e=>{_drag={type:"meeting",id:m.id};e.dataTransfer.effectAllowed="move";}}
+                        onClick={()=>setSelected({type:"meeting",data:m})}
+                        onMouseEnter={e=>{const r=e.currentTarget.getBoundingClientRect();setTooltip({x:r.left,y:r.bottom+6,content:{title:m.title,sub:m.time?`${m.date} · ${m.time}`:m.date,note:m.description||""}});}}
+                        onMouseLeave={()=>setTooltip(null)}
+                        style={{ background:"rgba(122,154,175,0.14)",color:"#9abacf",border:"1px solid rgba(122,154,175,0.25)" }}>
+                        ◷ {m.title}
+                      </button>
+                    );}
+                    const m=ev.data;return(
+                      <button key={m.id} className="cal-event" draggable={true}
+                        onDragStart={e=>{_drag={type:"milestone",id:m.id};e.dataTransfer.effectAllowed="move";}}
+                        onClick={()=>setSelected({type:"milestone",data:m})}
+                        onMouseEnter={e=>{const r=e.currentTarget.getBoundingClientRect();setTooltip({x:r.left,y:r.bottom+6,content:{title:m.name,sub:`Milestone · ${m.status}`,note:""}});}}
+                        onMouseLeave={()=>setTooltip(null)}
+                        style={{ background:"rgba(130,208,130,0.1)",color:"#82d082",border:"1px solid rgba(130,208,130,0.22)" }}>
+                        ◆ {m.name}
+                      </button>
+                    );
+                  })}
+                  {more>0&&<span className="cal-more">+{more} more</span>}
+                </>;
+              })()}
             </div>
           );
         })}
@@ -867,6 +882,19 @@ function HomeView({ client, session, onUpdate, newSince, onNavigate }) {
               <span style={{ fontFamily:"'Playfair Display',serif",fontSize:26,color:"#82d082",lineHeight:1 }}>{unread}</span>
               <div><div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",color:"#82d082" }}>New Message{unread>1?"s":""}</div><div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,marginTop:2 }}>From Mikaela →</div></div>
             </button>}
+          </div>
+        </div>
+      )}
+
+      {/* MANUSCRIPT: Story Overview Block */}
+      {manuscript&&(client.bookTitle||client.bookLogline||client.manuscriptNotes)&&(
+        <div style={{ marginBottom:32 }}>
+          <div style={{ padding:"24px 28px",background:`linear-gradient(135deg,rgba(122,138,175,0.07),rgba(122,138,175,0.03))`,border:`1px solid rgba(122,138,175,0.2)` }}>
+            {client.bookTitle&&<div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontWeight:400,fontSize:26,color:C.white,marginBottom:client.bookSubtitle?2:10,letterSpacing:"0.02em" }}>{client.bookTitle}</div>}
+            {client.bookSubtitle&&<div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:16,color:C.muted,marginBottom:10 }}>{client.bookSubtitle}</div>}
+            {client.bookGenre&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:"rgba(122,154,175,0.8)",marginBottom:10 }}>{client.bookGenre}</div>}
+            {client.bookLogline&&<div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:16,color:C.dim,lineHeight:1.7,marginBottom:client.manuscriptNotes?14:0 }}>{client.bookLogline}</div>}
+            {client.manuscriptNotes&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted,lineHeight:1.65,paddingTop:client.bookLogline?12:0,borderTop:client.bookLogline?`1px solid rgba(255,255,255,0.06)`:"none" }}>From Mikaela: {client.manuscriptNotes}</div>}
           </div>
         </div>
       )}
@@ -1335,45 +1363,118 @@ function StrategyMapView({ client }) {
   const sm=client.strategyMap||{phases:[],goals:[]};
   const phases=sm.phases||[];
   const goals=sm.goals||[];
-  const phaseStatus={ complete:{c:C.gold,label:"Complete",dot:"●"},active:{c:"#82d082",label:"Active",dot:"◉"},upcoming:{c:C.muted,label:"Upcoming",dot:"○"},future:{c:"rgba(255,255,255,0.25)",label:"Future",dot:"○"} };
-  const periods=[{key:"90day",label:"90-Day Goals"},{key:"6month",label:"6-Month Goals"},{key:"12month",label:"12-Month Goals"}];
+
+  const phaseStatus={
+    complete:{ c:C.gold, label:"Complete", dot:"●" },
+    active:{ c:"#82d082", label:"Active", dot:"◉" },
+    upcoming:{ c:C.muted, label:"Upcoming", dot:"○" },
+    future:{ c:"rgba(255,255,255,0.2)", label:"Future", dot:"○" },
+  };
+
+  // Group goals by phase
+  const phaseGoals = phases.reduce((acc,p)=>{
+    acc[p.id]=(goals||[]).filter(g=>g.phase===p.id);
+    return acc;
+  },{});
+  const unassignedGoals=(goals||[]).filter(g=>!g.phase||!phases.find(p=>p.id===g.phase));
+
+  const pct=(g)=>{
+    if(!g.target||g.target===0) return 0;
+    return Math.min(100,Math.round((g.current/g.target)*100));
+  };
+  const fmtNum=(n)=>{ if(!n&&n!==0) return "—"; return Number(n).toLocaleString(); };
+
   return (
     <div className="ks-up">
-      <SectionHeading sub="Your brand trajectory — three phases, one clear direction">Strategy Map</SectionHeading>
+      <SectionHeading sub="Your brand trajectory and the milestones that define it">Strategy Map</SectionHeading>
+
       {/* Phase arc */}
-      {phases.length>0&&<>
-        <div style={{ display:"flex",gap:1,marginBottom:28 }}>
+      {phases.length>0&&(
+        <div style={{ display:"flex",gap:1,marginBottom:32 }}>
           {phases.map((phase,i)=>{
             const cfg=phaseStatus[phase.status]||phaseStatus.future;
             const isActive=phase.status==="active";
+            const isDone=phase.status==="complete";
             return (
-              <div key={phase.id} style={{ flex:1,background:isActive?"rgba(130,208,130,0.06)":i===0&&phase.status==="complete"?"rgba(201,168,76,0.06)":"rgba(255,255,255,0.02)",border:`1px solid ${isActive?"rgba(130,208,130,0.25)":phase.status==="complete"?C.goldBorder:"rgba(255,255,255,0.07)"}`,padding:"18px 16px",position:"relative" }}>
-                <div style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.15em",textTransform:"uppercase",color:cfg.c,marginBottom:8 }}>{cfg.dot} {phase.name}</div>
-                <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:15,color:C.dim,lineHeight:1.55,marginBottom:12 }}>{phase.description}</div>
-                {phase.outcomes?.map((o,oi)=><div key={oi} style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,marginBottom:3 }}>→ {o}</div>)}
+              <div key={phase.id} style={{ flex:1,background:isActive?"rgba(130,208,130,0.05)":isDone?"rgba(201,168,76,0.05)":"rgba(255,255,255,0.02)",border:`1px solid ${isActive?"rgba(130,208,130,0.2)":isDone?C.goldBorder:"rgba(255,255,255,0.06)"}`,padding:"16px 14px",position:"relative" }}>
+                <div style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.15em",textTransform:"uppercase",color:cfg.c,marginBottom:6,display:"flex",alignItems:"center",gap:6 }}>
+                  <span>{cfg.dot}</span><span>{phase.name}</span>
+                </div>
+                <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:13,color:C.muted,lineHeight:1.5 }}>{phase.description}</div>
               </div>
             );
           })}
         </div>
-        <GoldRule/>
-      </>}
+      )}
+
       {/* Goals */}
-      {goals.length===0?<EmptyState message="Brand goals will appear here." icon="▲"/>:(
-        <div style={{ display:"flex",flexDirection:"column",gap:28 }}>
-          {periods.map(({key,label})=>{
-            const gs=goals.filter(g=>g.period===key);
+      {goals.length===0?(
+        <EmptyState message="Your goals and progress will appear here." icon="▲"/>
+      ):(
+        <div>
+          {phases.map(phase=>{
+            const gs=phaseGoals[phase.id]||[];
             if(!gs.length) return null;
-            return <div key={key}>
-              <div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.18em",textTransform:"uppercase",color:C.muted,marginBottom:16,paddingBottom:8,borderBottom:`1px solid ${C.goldBorder}` }}>{label}</div>
-              {gs.map(g=><div key={g.id} style={{ marginBottom:18 }}>
-                <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8 }}>
-                  <span style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.text }}>{g.name}</span>
-                  <TrajectoryTag trajectory={g.trajectory}/>
+            const cfg=phaseStatus[phase.status]||phaseStatus.future;
+            return (
+              <div key={phase.id} style={{ marginBottom:32 }}>
+                <div style={{ display:"flex",alignItems:"center",gap:10,marginBottom:16,paddingBottom:10,borderBottom:`1px solid rgba(255,255,255,0.06)` }}>
+                  <span style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.16em",textTransform:"uppercase",color:cfg.c }}>{cfg.dot} {phase.name}</span>
                 </div>
-                <ProgressBar value={g.progress} trajectory={g.trajectory}/>
-              </div>)}
-            </div>;
+                {gs.map(g=>{
+                  const p=pct(g);
+                  const hasNums=g.target>0;
+                  return (
+                    <div key={g.id} style={{ marginBottom:20,padding:"16px 20px",background:"rgba(255,255,255,0.02)",border:`1px solid rgba(255,255,255,0.06)` }}>
+                      <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10,gap:12 }}>
+                        <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:18,color:C.text,fontWeight:400 }}>{g.label}</div>
+                        {hasNums&&<span style={{ fontFamily:"'Playfair Display',serif",fontSize:22,color:C.gold,lineHeight:1,flexShrink:0 }}>{p}%</span>}
+                      </div>
+                      {hasNums&&(
+                        <>
+                          <ProgressBar value={p} trajectory={p>=75?"ahead":p>=40?"on-track":"needs-attention"}/>
+                          <div style={{ display:"flex",justifyContent:"space-between",marginTop:8 }}>
+                            <span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted }}>You're at {fmtNum(g.current)} {g.unit}</span>
+                            <span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted }}>Target: {fmtNum(g.target)} {g.unit}{g.dueDate?` · by ${fmtDate(g.dueDate)}`:""}</span>
+                          </div>
+                        </>
+                      )}
+                      {!hasNums&&g.notes&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted,fontStyle:"italic",marginTop:6 }}>{g.notes}</div>}
+                    </div>
+                  );
+                })}
+              </div>
+            );
           })}
+          {unassignedGoals.length>0&&(
+            <div style={{ marginBottom:32 }}>
+              <div style={{ marginBottom:16,paddingBottom:10,borderBottom:`1px solid rgba(255,255,255,0.06)` }}>
+                <span style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.16em",textTransform:"uppercase",color:C.muted }}>General Goals</span>
+              </div>
+              {unassignedGoals.map(g=>{
+                const p=pct(g);
+                const hasNums=g.target>0;
+                return (
+                  <div key={g.id} style={{ marginBottom:20,padding:"16px 20px",background:"rgba(255,255,255,0.02)",border:`1px solid rgba(255,255,255,0.06)` }}>
+                    <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10,gap:12 }}>
+                      <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:18,color:C.text }}>{g.label}</div>
+                      {hasNums&&<span style={{ fontFamily:"'Playfair Display',serif",fontSize:22,color:C.gold,lineHeight:1,flexShrink:0 }}>{p}%</span>}
+                    </div>
+                    {hasNums&&(
+                      <>
+                        <ProgressBar value={p} trajectory={p>=75?"ahead":p>=40?"on-track":"needs-attention"}/>
+                        <div style={{ display:"flex",justifyContent:"space-between",marginTop:8 }}>
+                          <span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted }}>You're at {fmtNum(g.current)} {g.unit}</span>
+                          <span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted }}>Target: {fmtNum(g.target)} {g.unit}{g.dueDate?` · by ${fmtDate(g.dueDate)}`:""}</span>
+                        </div>
+                      </>
+                    )}
+                    {!hasNums&&g.notes&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted,fontStyle:"italic",marginTop:6 }}>{g.notes}</div>}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -1677,28 +1778,32 @@ function BrandVoiceView({ client, isAdmin, onUpdate, apiKey }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// DOCUMENTS VIEW
+// DOCUMENTS VIEW — shelf-based
 // ─────────────────────────────────────────────────────────────
-const DOC_CLIENT_CATEGORIES = ["General","Drafts","Research","Brand Assets","Reference"];
+const SHELVES_BRANDING = ["Brand Assets","Research","Contracts","Reference","General"];
+const SHELVES_MANUSCRIPT = ["Approved Manuscript","Chapter Revisions","Research","Contracts","Reference","General"];
 
 function DocumentsView({ client, session, onUpdate }) {
   const docs=client.documents||[];
   const isAdmin=session.role==="admin";
+  const manuscript=isManuscript(client.tier);
+  const SHELVES=manuscript?SHELVES_MANUSCRIPT:SHELVES_BRANDING;
   const [showLinkModal,setShowLinkModal]=useState(false);
-  const [linkForm,setLinkForm]=useState({name:"",link:"",notes:"",category:"General",adminOnly:false});
+  const [linkForm,setLinkForm]=useState({name:"",link:"",notes:"",shelf:"General",chapterRef:"",adminOnly:false});
   const [uploading,setUploading]=useState(false);
   const [dragOverZone,setDragOverZone]=useState(false);
-  const [uploadCategory,setUploadCategory]=useState("General");
-  const [collapsedCats,setCollapsedCats]=useState({});
+  const [uploadShelf,setUploadShelf]=useState("General");
+  const [uploadChapter,setUploadChapter]=useState("");
+  const [collapsedShelves,setCollapsedShelves]=useState({});
   const fileRef=useRef(null);
 
   const processFile=file=>{
     if(!file) return;
-    if(file.size>750000){ alert("File must be under 750KB for direct upload.\nFor larger files, use 'Add External Link' to share a Google Drive or Dropbox link."); return; }
+    if(file.size>750000){ alert("File must be under 750KB.\nFor larger files, use 'Add External Link' to share a Google Drive or Dropbox link."); return; }
     setUploading(true);
     const reader=new FileReader();
     reader.onload=ev=>{
-      const doc={id:uid(),name:file.name,size:Math.round(file.size/1024)+"KB",type:file.type,uploadedBy:session.username,uploadedAt:new Date().toISOString(),notes:"",category:isAdmin?uploadCategory:"General",adminOnly:false,data:ev.target.result};
+      const doc={id:uid(),name:file.name,size:Math.round(file.size/1024)+"KB",type:file.type,uploadedBy:session.username,uploadedAt:new Date().toISOString(),notes:"",shelf:isAdmin?uploadShelf:"General",chapterRef:isAdmin?uploadChapter:"",adminOnly:false,data:ev.target.result};
       onUpdate({...client,documents:[...docs,doc]});
       setUploading(false);
     };
@@ -1711,9 +1816,9 @@ function DocumentsView({ client, session, onUpdate }) {
 
   const addLink=()=>{
     if(!linkForm.name||!linkForm.link) return;
-    const doc={id:uid(),name:linkForm.name,size:"External Link",type:"link",uploadedBy:session.username,uploadedAt:new Date().toISOString(),notes:linkForm.notes,link:linkForm.link,category:linkForm.category||"General",adminOnly:isAdmin&&linkForm.adminOnly};
+    const doc={id:uid(),name:linkForm.name,size:"Link",type:"link",uploadedBy:session.username,uploadedAt:new Date().toISOString(),notes:linkForm.notes,link:linkForm.link,shelf:linkForm.shelf||"General",chapterRef:linkForm.chapterRef||"",adminOnly:isAdmin&&linkForm.adminOnly};
     onUpdate({...client,documents:[...docs,doc]});
-    setLinkForm({name:"",link:"",notes:"",category:"General",adminOnly:false});
+    setLinkForm({name:"",link:"",notes:"",shelf:"General",chapterRef:"",adminOnly:false});
     setShowLinkModal(false);
   };
 
@@ -1724,49 +1829,101 @@ function DocumentsView({ client, session, onUpdate }) {
   const mikaelaDocs=docs.filter(d=>d.uploadedBy==="mikaela"&&!d.adminOnly);
   const adminOnlyDocs=docs.filter(d=>d.adminOnly);
   const clientDocs=docs.filter(d=>d.uploadedBy!=="mikaela"&&!d.adminOnly);
-  const toggleCat=cat=>setCollapsedCats(p=>({...p,[cat]:!p[cat]}));
+  const toggleShelf=s=>setCollapsedShelves(p=>({...p,[s]:!p[s]}));
 
-  // Group client docs by category
-  const clientDocsByCat = DOC_CLIENT_CATEGORIES.reduce((acc,cat)=>{
-    const catDocs=clientDocs.filter(d=>(d.category||"General")===cat);
-    if(catDocs.length) acc[cat]=catDocs;
+  // Group Mikaela docs by shelf
+  const mikaelaByShelves=SHELVES.reduce((acc,s)=>{
+    const sd=mikaelaDocs.filter(d=>(d.shelf||"General")===s);
+    if(sd.length) acc[s]=sd;
     return acc;
   },{});
+  // Group client docs by shelf
+  const clientByShelves=SHELVES.reduce((acc,s)=>{
+    const sd=clientDocs.filter(d=>(d.shelf||"General")===s);
+    if(sd.length) acc[s]=sd;
+    return acc;
+  },{});
+  // Chapters (for Chapter Revisions shelf grouping by chapterRef)
+  const chapterRevisions=mikaelaDocs.filter(d=>d.shelf==="Chapter Revisions");
+  const chapterGroups=[...new Set(chapterRevisions.map(d=>d.chapterRef||"Unassigned"))];
 
   return (
     <div className="ks-up">
-      <SectionHeading sub="Shared files, briefs, and resources">Document Hub</SectionHeading>
+      <SectionHeading sub="Your documents, organized by shelf">Document Hub</SectionHeading>
+
       {/* Upload zone */}
       <div className={`upload-zone${dragOverZone?" drag-over":""}`}
         onDragOver={e=>{e.preventDefault();setDragOverZone(true);}}
         onDragLeave={()=>setDragOverZone(false)}
         onDrop={handleDrop}
         onClick={()=>fileRef.current?.click()}
-        style={{ marginBottom:12 }}>
+        style={{ marginBottom:10 }}>
         <input ref={fileRef} type="file" style={{ display:"none" }} onChange={handleFileInput} disabled={uploading}/>
-        <div style={{ fontSize:24,marginBottom:8,opacity:0.5 }}>⬆</div>
-        <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.muted,marginBottom:4 }}>{uploading?"Uploading…":"Click to upload or drag & drop"}</div>
-        <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:"rgba(255,255,255,0.3)" }}>Files up to 750KB · PDF, Word, images, text</div>
+        <div style={{ fontSize:22,marginBottom:6,opacity:0.4 }}>⬆</div>
+        <div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted }}>{uploading?"Uploading…":"Click to upload or drag & drop"}</div>
+        <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:"rgba(255,255,255,0.25)",marginTop:3 }}>Files up to 750KB · PDF, Word, images, text</div>
       </div>
       {isAdmin&&(
-        <div style={{ display:"flex",gap:8,alignItems:"center",marginBottom:16 }}>
-          <select className="ks-field" value={uploadCategory} onChange={e=>setUploadCategory(e.target.value)} style={{ maxWidth:160 }}>
-            {DOC_CLIENT_CATEGORIES.map(c=><option key={c}>{c}</option>)}
+        <div style={{ display:"flex",gap:8,alignItems:"center",marginBottom:10 }}>
+          <select className="ks-field" value={uploadShelf} onChange={e=>setUploadShelf(e.target.value)} style={{ maxWidth:180 }}>
+            {SHELVES.map(s=><option key={s}>{s}</option>)}
           </select>
-          <span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted }}>Upload category</span>
+          {uploadShelf==="Chapter Revisions"&&(
+            <input className="ks-field" value={uploadChapter} onChange={e=>setUploadChapter(e.target.value)} placeholder="Chapter (e.g. Ch. 3)" style={{ maxWidth:140 }}/>
+          )}
+          <span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted }}>Upload shelf</span>
         </div>
       )}
-      <div style={{ display:"flex",justifyContent:"flex-end",marginBottom:24,gap:8 }}>
+      <div style={{ display:"flex",justifyContent:"flex-end",marginBottom:24 }}>
         <button className="btn-ghost" onClick={()=>setShowLinkModal(true)} style={{ fontSize:10 }}>+ Add External Link</button>
       </div>
 
-      {/* From Mikaela */}
+      {/* Shelves — From Mikaela */}
       <Label>From Mikaela</Label>
       {mikaelaDocs.length===0?<div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.muted,fontStyle:"italic",marginBottom:24,padding:"10px 0" }}>No documents shared yet.</div>:(
-        <div style={{ marginBottom:24 }}>{mikaelaDocs.map(doc=><DocRow key={doc.id} doc={doc} icon={fileIcon(doc.type)} onOpen={()=>openDoc(doc)} onDelete={isAdmin?()=>deleteDoc(doc.id):null}/>)}</div>
+        <div style={{ marginBottom:24 }}>
+          {SHELVES.map(shelf=>{
+            if(shelf==="Chapter Revisions"&&manuscript){
+              // Special shelf: group by chapter
+              if(!chapterRevisions.length) return null;
+              const isCollapsed=collapsedShelves[shelf];
+              return (
+                <div key={shelf} style={{ marginBottom:12 }}>
+                  <div onClick={()=>toggleShelf(shelf)} style={{ display:"flex",alignItems:"center",gap:8,padding:"8px 12px",background:"rgba(201,168,76,0.04)",border:`1px solid rgba(201,168,76,0.12)`,cursor:"pointer",marginBottom:2 }}>
+                    <span style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.gold }}>📚 Chapter Revisions</span>
+                    <span style={{ fontFamily:"'Lato',sans-serif",fontSize:10,color:C.muted }}>({chapterRevisions.length})</span>
+                    <span style={{ marginLeft:"auto",color:C.muted,fontSize:11,transition:"transform 0.15s",display:"inline-block",transform:isCollapsed?"rotate(-90deg)":"rotate(0deg)" }}>▾</span>
+                  </div>
+                  {!isCollapsed&&chapterGroups.map(ch=>(
+                    <div key={ch} style={{ marginLeft:16,marginBottom:4 }}>
+                      <div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,color:C.muted,letterSpacing:"0.1em",padding:"5px 0",borderBottom:`1px solid rgba(255,255,255,0.05)`,marginBottom:2 }}>{ch}</div>
+                      {chapterRevisions.filter(d=>(d.chapterRef||"Unassigned")===ch).map(doc=>(
+                        <DocRow key={doc.id} doc={doc} icon={fileIcon(doc.type)} onOpen={()=>openDoc(doc)} onDelete={isAdmin?()=>deleteDoc(doc.id):null}/>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              );
+            }
+            const shelfDocs=mikaelaByShelves[shelf];
+            if(!shelfDocs) return null;
+            const isCollapsed=collapsedShelves[shelf];
+            const shelfIcon=shelf==="Approved Manuscript"?"📖":shelf==="Research"?"🔍":shelf==="Contracts"?"📋":shelf==="Brand Assets"?"🎨":"📁";
+            return (
+              <div key={shelf} style={{ marginBottom:12 }}>
+                <div onClick={()=>toggleShelf(shelf)} style={{ display:"flex",alignItems:"center",gap:8,padding:"8px 12px",background:"rgba(255,255,255,0.03)",border:`1px solid rgba(255,255,255,0.07)`,cursor:"pointer",marginBottom:2 }}>
+                  <span style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.muted }}>{shelfIcon} {shelf}</span>
+                  <span style={{ fontFamily:"'Lato',sans-serif",fontSize:10,color:C.muted }}>({shelfDocs.length})</span>
+                  <span style={{ marginLeft:"auto",color:C.muted,fontSize:11,transition:"transform 0.15s",display:"inline-block",transform:isCollapsed?"rotate(-90deg)":"rotate(0deg)" }}>▾</span>
+                </div>
+                {!isCollapsed&&shelfDocs.map(doc=><DocRow key={doc.id} doc={doc} icon={fileIcon(doc.type)} onOpen={()=>openDoc(doc)} onDelete={isAdmin?()=>deleteDoc(doc.id):null}/>)}
+              </div>
+            );
+          })}
+        </div>
       )}
 
-      {/* Admin-only section (admin sees, client does not) */}
+      {/* Admin-only section */}
       {isAdmin&&(
         <>
           <GoldRule/>
@@ -1780,33 +1937,41 @@ function DocumentsView({ client, session, onUpdate }) {
         </>
       )}
 
+      {/* Client uploads */}
       <GoldRule/>
-      {/* Client uploads, grouped by category */}
       <div style={{ marginTop:20 }}>
         <Label>{isAdmin?"Client Uploads":"Your Uploads"}</Label>
         {clientDocs.length===0?<div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.muted,fontStyle:"italic",padding:"10px 0" }}>No documents uploaded yet.</div>:(
-          Object.entries(clientDocsByCat).map(([cat,catDocs])=>(
-            <div key={cat} style={{ marginBottom:12 }}>
-              <div onClick={()=>toggleCat(cat)} style={{ display:"flex",alignItems:"center",gap:8,padding:"6px 0",cursor:"pointer",borderBottom:`1px solid rgba(255,255,255,0.06)`,marginBottom:4 }}>
-                <span style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.muted }}>{cat}</span>
-                <span style={{ fontFamily:"'Lato',sans-serif",fontSize:10,color:C.muted }}>({catDocs.length})</span>
-                <span style={{ marginLeft:"auto",color:C.muted,fontSize:10,transition:"transform 0.15s",display:"inline-block",transform:collapsedCats[cat]?"rotate(-90deg)":"rotate(0deg)" }}>▾</span>
+          SHELVES.map(shelf=>{
+            const sd=clientByShelves[shelf];
+            if(!sd) return null;
+            const isCollapsed=collapsedShelves["client-"+shelf];
+            return (
+              <div key={shelf} style={{ marginBottom:12 }}>
+                <div onClick={()=>setCollapsedShelves(p=>({...p,["client-"+shelf]:!p["client-"+shelf]}))} style={{ display:"flex",alignItems:"center",gap:8,padding:"6px 0",cursor:"pointer",borderBottom:`1px solid rgba(255,255,255,0.06)`,marginBottom:4 }}>
+                  <span style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.muted }}>{shelf}</span>
+                  <span style={{ fontFamily:"'Lato',sans-serif",fontSize:10,color:C.muted }}>({sd.length})</span>
+                  <span style={{ marginLeft:"auto",color:C.muted,fontSize:11,transition:"transform 0.15s",display:"inline-block",transform:isCollapsed?"rotate(-90deg)":"rotate(0deg)" }}>▾</span>
+                </div>
+                {!isCollapsed&&sd.map(doc=><DocRow key={doc.id} doc={doc} icon={fileIcon(doc.type)} onOpen={()=>openDoc(doc)} onDelete={isAdmin?()=>deleteDoc(doc.id):null}/>)}
               </div>
-              {!collapsedCats[cat]&&catDocs.map(doc=><DocRow key={doc.id} doc={doc} icon={fileIcon(doc.type)} onOpen={()=>openDoc(doc)} onDelete={()=>deleteDoc(doc.id)}/>)}
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
       {showLinkModal&&(
         <Modal title="Add External Link" onClose={()=>setShowLinkModal(false)}>
-          <FormRow label="Document Name" hint="What should the file be called?"><input className="ks-field" value={linkForm.name} onChange={e=>setLinkForm(f=>({...f,name:e.target.value}))} placeholder="e.g. Brand Brief Q1 2024"/></FormRow>
-          <FormRow label="URL" hint="Google Drive, Dropbox, Notion, or any link"><input className="ks-field" value={linkForm.link} onChange={e=>setLinkForm(f=>({...f,link:e.target.value}))} placeholder="https://…"/></FormRow>
-          <FormRow label="Category">
-            <select className="ks-field" value={linkForm.category} onChange={e=>setLinkForm(f=>({...f,category:e.target.value}))}>
-              {DOC_CLIENT_CATEGORIES.map(c=><option key={c}>{c}</option>)}
+          <FormRow label="Document Name"><input className="ks-field" value={linkForm.name} onChange={e=>setLinkForm(f=>({...f,name:e.target.value}))} placeholder="e.g. Brand Brief Q1 2024"/></FormRow>
+          <FormRow label="URL"><input className="ks-field" value={linkForm.link} onChange={e=>setLinkForm(f=>({...f,link:e.target.value}))} placeholder="https://…"/></FormRow>
+          <FormRow label="Shelf">
+            <select className="ks-field" value={linkForm.shelf} onChange={e=>setLinkForm(f=>({...f,shelf:e.target.value}))}>
+              {SHELVES.map(s=><option key={s}>{s}</option>)}
             </select>
           </FormRow>
+          {manuscript&&linkForm.shelf==="Chapter Revisions"&&(
+            <FormRow label="Chapter"><input className="ks-field" value={linkForm.chapterRef} onChange={e=>setLinkForm(f=>({...f,chapterRef:e.target.value}))} placeholder="e.g. Ch. 3 — The Turn"/></FormRow>
+          )}
           <FormRow label="Notes (optional)"><input className="ks-field" value={linkForm.notes} onChange={e=>setLinkForm(f=>({...f,notes:e.target.value}))} placeholder="Brief description…"/></FormRow>
           {isAdmin&&(
             <FormRow label="Visibility">
@@ -2327,16 +2492,30 @@ function BookCoachingView({ client, isAdmin, session, onUpdate }) {
 // ─────────────────────────────────────────────────────────────
 function ClientSettingsView({ client, session, onUpdate }) {
   const manuscript = isManuscript(client.tier);
+  const prefs = client.preferences || { contactMethod:"messages", timezone:"", displayName:"" };
+  const [form, setForm] = useState({ ...prefs });
+  const [saved, setSaved] = useState(false);
+  const setF = (k,v) => setForm(f=>({...f,[k]:v}));
+
+  const save = () => {
+    onUpdate({...client, preferences:form});
+    setSaved(true); setTimeout(()=>setSaved(false),2000);
+  };
+
+  const TIMEZONES = ["Eastern (ET)","Central (CT)","Mountain (MT)","Pacific (PT)","Alaska (AKT)","Hawaii (HT)","GMT","CET (Central Europe)","IST (India)","Other"];
+
   return (
     <div className="ks-up">
-      <SectionHeading>Preferences</SectionHeading>
+      <SectionHeading sub="How you'd like to work together">Preferences</SectionHeading>
+
+      {/* Async Mode — manuscript only */}
       {manuscript&&(
         <div style={{ padding:"20px 24px",background:C.surface,border:`1px solid ${C.goldBorder}`,marginBottom:20 }}>
           <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",gap:16 }}>
             <div>
               <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,fontWeight:700,color:C.text,marginBottom:5,letterSpacing:"0.04em" }}>Async Mode</div>
               <div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted,lineHeight:1.65,maxWidth:440 }}>
-                When on, Mikaela will default to written feedback and direct messages rather than scheduling calls. Great if your schedule makes regular meetings difficult.
+                When on, Mikaela will default to written feedback and direct messages rather than scheduling calls.
               </div>
             </div>
             <button onClick={()=>onUpdate({...client,asyncMode:!client.asyncMode})}
@@ -2346,6 +2525,43 @@ function ClientSettingsView({ client, session, onUpdate }) {
           </div>
         </div>
       )}
+
+      {/* Contact preference */}
+      <div style={{ marginBottom:20 }}>
+        <FormRow label="Preferred Contact Method" hint="How should Mikaela reach out for quick questions?">
+          <div style={{ display:"flex",gap:10 }}>
+            {[{v:"messages",l:"Portal Messages"},{v:"email",l:"Email"}].map(opt=>(
+              <button key={opt.v} onClick={()=>setF("contactMethod",opt.v)}
+                className={form.contactMethod===opt.v?"btn-gold":"btn-ghost"}
+                style={{ padding:"9px 18px",fontSize:11 }}>{opt.l}</button>
+            ))}
+          </div>
+        </FormRow>
+      </div>
+
+      {/* Timezone */}
+      <div style={{ marginBottom:20 }}>
+        <FormRow label="Your Timezone" hint="Helps Mikaela schedule calls and deliverables at the right time.">
+          <select className="ks-field" value={form.timezone} onChange={e=>setF("timezone",e.target.value)} style={{ maxWidth:280 }}>
+            <option value="">— Select —</option>
+            {TIMEZONES.map(t=><option key={t}>{t}</option>)}
+          </select>
+        </FormRow>
+      </div>
+
+      {/* Display name */}
+      <div style={{ marginBottom:28 }}>
+        <FormRow label="Preferred Name" hint="How would you like to be addressed in the portal?">
+          <input className="ks-field" value={form.displayName} onChange={e=>setF("displayName",e.target.value)} placeholder={client.name} style={{ maxWidth:280 }}/>
+        </FormRow>
+      </div>
+
+      <div style={{ display:"flex",alignItems:"center",gap:16 }}>
+        <button className="btn-gold" onClick={save}>Save Preferences</button>
+        {saved&&<span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:"#82d082",letterSpacing:"0.1em" }}>✓ Saved</span>}
+      </div>
+
+      <GoldRule my={28}/>
       <div style={{ padding:"14px 18px",background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)" }}>
         <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,marginBottom:5 }}>Portal access</div>
         <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.dim }}>@{session.username} · {TIER_LABELS[client.tier]||client.tier}</div>
@@ -2546,26 +2762,46 @@ function AdminClientEditor({ client, users, onUpdate, activeSection, onSectionCh
   },[client,onUpdate]);
 
   // ── Content ──
-  const ContentSection=()=>(
-    <div>
-      <div style={{ display:"flex",justifyContent:"flex-end",marginBottom:16 }}><button className="btn-ghost" onClick={()=>{setEditItem(null);setModal("content");}}>+ Add Entry</button></div>
-      {!client.contentCalendar.length?<EmptyState message="No content entries yet." icon="◈"/>:(
-        <table className="ks-table">
-          <thead><tr><th>Title</th><th>Status</th><th>Approval</th><th>Date</th><th></th></tr></thead>
-          <tbody>{client.contentCalendar.map(item=>(
-            <tr key={item.id}>
-              <td style={{ maxWidth:200 }}>{item.title}</td>
-              <td><StatusBadge status={item.status}/></td>
-              <td><StatusBadge status={item.approvalStatus||"Pending Approval"}/></td>
-              <td style={{ color:C.muted,fontSize:12 }}>{fmtDate(item.scheduledDate)}</td>
-              <td><div style={{ display:"flex",gap:6 }}><button className="btn-sm" onClick={()=>{setEditItem(item);setModal("content");}}>Edit</button><button className="btn-del" onClick={()=>update({contentCalendar:client.contentCalendar.filter(i=>i.id!==item.id)})}>Del</button></div></td>
-            </tr>
-          ))}</tbody>
-        </table>
-      )}
-      {modal==="content"&&<ContentModal entry={editItem} onClose={()=>{setModal(null);setEditItem(null);}} onSave={s=>{update({contentCalendar:editItem?client.contentCalendar.map(i=>i.id===s.id?s:i):[...client.contentCalendar,s]});setModal(null);setEditItem(null);}}/>}
-    </div>
-  );
+  const ContentSection=()=>{
+    const [showAll,setShowAll]=useState(false);
+    const today=new Date(); today.setHours(0,0,0,0);
+    const twoWeeks=new Date(today); twoWeeks.setDate(twoWeeks.getDate()+14);
+    const twoWeeksStr=twoWeeks.toISOString().split("T")[0];
+    const todayStr2=today.toISOString().split("T")[0];
+    const filtered=showAll?client.contentCalendar:client.contentCalendar.filter(i=>{
+      if(!i.scheduledDate) return true; // no date — always show
+      return i.scheduledDate>=todayStr2&&i.scheduledDate<=twoWeeksStr;
+    });
+    return (
+      <div>
+        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,gap:10 }}>
+          <div style={{ display:"flex",alignItems:"center",gap:10 }}>
+            <button className={showAll?"btn-ghost":"btn-gold"} style={{ padding:"7px 14px",fontSize:10 }} onClick={()=>setShowAll(false)}>Next 2 Weeks</button>
+            <button className={showAll?"btn-gold":"btn-ghost"} style={{ padding:"7px 14px",fontSize:10 }} onClick={()=>setShowAll(true)}>All</button>
+            {!showAll&&<span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,fontStyle:"italic" }}>{filtered.length} item{filtered.length!==1?"s":""}</span>}
+          </div>
+          <button className="btn-ghost" onClick={()=>{setEditItem(null);setModal("content");}}>+ Add Entry</button>
+        </div>
+        {!filtered.length?(
+          <EmptyState message={showAll?"No content entries yet.":"Nothing scheduled in the next two weeks."} icon="◈"/>
+        ):(
+          <table className="ks-table">
+            <thead><tr><th>Title</th><th>Status</th><th>Approval</th><th>Date</th><th></th></tr></thead>
+            <tbody>{filtered.map(item=>(
+              <tr key={item.id}>
+                <td style={{ maxWidth:200 }}>{item.title}</td>
+                <td><StatusBadge status={item.status}/></td>
+                <td><StatusBadge status={item.approvalStatus||"Pending Approval"}/></td>
+                <td style={{ color:C.muted,fontSize:12 }}>{fmtDate(item.scheduledDate)}</td>
+                <td><div style={{ display:"flex",gap:6 }}><button className="btn-sm" onClick={()=>{setEditItem(item);setModal("content");}}>Edit</button><button className="btn-del" onClick={()=>update({contentCalendar:client.contentCalendar.filter(i=>i.id!==item.id)})}>Del</button></div></td>
+              </tr>
+            ))}</tbody>
+          </table>
+        )}
+        {modal==="content"&&<ContentModal entry={editItem} onClose={()=>{setModal(null);setEditItem(null);}} onSave={s=>{update({contentCalendar:editItem?client.contentCalendar.map(i=>i.id===s.id?s:i):[...client.contentCalendar,s]});setModal(null);setEditItem(null);}}/>}
+      </div>
+    );
+  };
 
   // ── Calendar ──
   const CalendarSection=()=><CalendarView client={client} isAdmin={true} session={{ username:"mikaela",role:"admin" }} onUpdate={onUpdate}/>;
@@ -2674,43 +2910,95 @@ function AdminClientEditor({ client, users, onUpdate, activeSection, onSectionCh
   // ── Strategy Map ──
   const StrategySection=()=>{
     const sm=client.strategyMap||{phases:[],goals:[]};
+    const [goalForm,setGoalForm]=useState({ id:"", label:"", current:0, target:0, unit:"", dueDate:"", phase:"", notes:"" });
+    const [editingGoal,setEditingGoal]=useState(null); // id being edited
+    const statusOptions=[{v:"complete",l:"Complete"},{v:"active",l:"Active"},{v:"upcoming",l:"Upcoming"},{v:"future",l:"Future"}];
+
+    const openGoalEdit=(g)=>{
+      if(g) { setGoalForm({...g}); setEditingGoal(g.id); }
+      else { setGoalForm({id:uid(),label:"",current:0,target:0,unit:"",dueDate:"",phase:"",notes:""}); setEditingGoal("__new__"); }
+    };
+    const saveGoal=()=>{
+      if(!goalForm.label) return;
+      const newGoals=editingGoal==="__new__"?[...(sm.goals||[]),goalForm]:(sm.goals||[]).map(x=>x.id===editingGoal?goalForm:x);
+      update({strategyMap:{...sm,goals:newGoals}});
+      setEditingGoal(null);
+    };
+    const deleteGoal=id=>update({strategyMap:{...sm,goals:(sm.goals||[]).filter(x=>x.id!==id)}});
+
     return (
       <div>
-        <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,marginBottom:20,fontStyle:"italic" }}>Edit the three phases below, then add goals with progress tracking.</div>
-        {sm.phases?.map((phase,i)=>{
-          const statusOptions=[{v:"complete",l:"Complete"},{v:"active",l:"Active"},{v:"upcoming",l:"Upcoming"},{v:"future",l:"Future"}];
-          return (
-            <div key={phase.id} style={{ padding:"16px",background:"rgba(255,255,255,0.03)",border:`1px solid rgba(255,255,255,0.07)`,marginBottom:10 }}>
-              <div style={{ display:"grid",gridTemplateColumns:"1fr auto",gap:12,marginBottom:10 }}>
-                <input className="ks-field" value={phase.name} onChange={e=>update({strategyMap:{...sm,phases:sm.phases.map((p,j)=>j===i?{...p,name:e.target.value}:p)}})} placeholder="Phase name"/>
-                <select className="ks-field" value={phase.status} onChange={e=>update({strategyMap:{...sm,phases:sm.phases.map((p,j)=>j===i?{...p,status:e.target.value}:p)}})} style={{ width:120 }}>
-                  {statusOptions.map(o=><option key={o.v} value={o.v}>{o.l}</option>)}
-                </select>
-              </div>
-              <textarea className="ks-field" rows={2} value={phase.description} onChange={e=>update({strategyMap:{...sm,phases:sm.phases.map((p,j)=>j===i?{...p,description:e.target.value}:p)}})} placeholder="Phase description…"/>
-            </div>
-          );
-        })}
+        <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,marginBottom:20,fontStyle:"italic" }}>Set each phase status, then add measurable goals with current + target numbers.</div>
+
+        {/* Phase status editors */}
+        <Label>Phases</Label>
+        {sm.phases?.map((phase,i)=>(
+          <div key={phase.id} style={{ display:"grid",gridTemplateColumns:"1fr 1fr auto",gap:10,marginBottom:8 }}>
+            <input className="ks-field" value={phase.name} onChange={e=>update({strategyMap:{...sm,phases:sm.phases.map((p,j)=>j===i?{...p,name:e.target.value}:p)}})} placeholder="Phase name"/>
+            <input className="ks-field" value={phase.description} onChange={e=>update({strategyMap:{...sm,phases:sm.phases.map((p,j)=>j===i?{...p,description:e.target.value}:p)}})} placeholder="One-line description…"/>
+            <select className="ks-field" value={phase.status} onChange={e=>update({strategyMap:{...sm,phases:sm.phases.map((p,j)=>j===i?{...p,status:e.target.value}:p)}})} style={{ width:120 }}>
+              {statusOptions.map(o=><option key={o.v} value={o.v}>{o.l}</option>)}
+            </select>
+          </div>
+        ))}
+
         <GoldRule my={20}/>
+
+        {/* Goals */}
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
           <Label>Goals</Label>
-          <button className="btn-ghost" onClick={()=>{setEditItem(null);setModal("goal");}}>+ Add Goal</button>
+          <button className="btn-ghost" onClick={()=>openGoalEdit(null)}>+ Add Goal</button>
         </div>
-        {!(sm.goals?.length)?<EmptyState message="No goals yet."/>:(
+
+        {/* Inline goal editor */}
+        {editingGoal&&(
+          <div style={{ background:"rgba(201,168,76,0.04)",border:`1px solid rgba(201,168,76,0.2)`,padding:"20px",marginBottom:20 }}>
+            <div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.gold,marginBottom:16 }}>{editingGoal==="__new__"?"New Goal":"Edit Goal"}</div>
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12 }}>
+              <FormRow label="Goal Label"><input className="ks-field" value={goalForm.label} onChange={e=>setGoalForm(f=>({...f,label:e.target.value}))} placeholder="e.g. LinkedIn Followers"/></FormRow>
+              <FormRow label="Unit"><input className="ks-field" value={goalForm.unit} onChange={e=>setGoalForm(f=>({...f,unit:e.target.value}))} placeholder="e.g. followers, impressions"/></FormRow>
+            </div>
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginBottom:12 }}>
+              <FormRow label="Current"><input className="ks-field" type="number" value={goalForm.current} onChange={e=>setGoalForm(f=>({...f,current:Number(e.target.value)}))}/></FormRow>
+              <FormRow label="Target"><input className="ks-field" type="number" value={goalForm.target} onChange={e=>setGoalForm(f=>({...f,target:Number(e.target.value)}))}/></FormRow>
+              <FormRow label="Due Date"><input className="ks-field" type="date" value={goalForm.dueDate} onChange={e=>setGoalForm(f=>({...f,dueDate:e.target.value}))}/></FormRow>
+            </div>
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12 }}>
+              <FormRow label="Phase">
+                <select className="ks-field" value={goalForm.phase} onChange={e=>setGoalForm(f=>({...f,phase:e.target.value}))}>
+                  <option value="">— None —</option>
+                  {sm.phases?.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </FormRow>
+              <FormRow label="Notes (optional)"><input className="ks-field" value={goalForm.notes} onChange={e=>setGoalForm(f=>({...f,notes:e.target.value}))} placeholder="Context for client…"/></FormRow>
+            </div>
+            <div style={{ display:"flex",gap:10 }}>
+              <button className="btn-gold" onClick={saveGoal} disabled={!goalForm.label}>Save Goal</button>
+              <button className="btn-ghost" onClick={()=>setEditingGoal(null)}>Cancel</button>
+            </div>
+          </div>
+        )}
+
+        {!(sm.goals?.length)?<EmptyState message="No goals yet. Add a goal above."/>:(
           <table className="ks-table">
-            <thead><tr><th>Goal</th><th>Period</th><th>Progress</th><th>Trajectory</th><th></th></tr></thead>
-            <tbody>{sm.goals.map(g=>(
-              <tr key={g.id}>
-                <td>{g.name}</td>
-                <td style={{ color:C.muted,fontSize:12 }}>{g.period}</td>
-                <td><span style={{ fontFamily:"'Playfair Display',serif",color:C.gold,fontSize:14 }}>{g.progress}%</span></td>
-                <td><TrajectoryTag trajectory={g.trajectory}/></td>
-                <td><div style={{ display:"flex",gap:6 }}><button className="btn-sm" onClick={()=>{setEditItem(g);setModal("goal");}}>Edit</button><button className="btn-del" onClick={()=>update({strategyMap:{...sm,goals:sm.goals.filter(x=>x.id!==g.id)}})}>Del</button></div></td>
-              </tr>
-            ))}</tbody>
+            <thead><tr><th>Goal</th><th>Progress</th><th>Target</th><th>Phase</th><th></th></tr></thead>
+            <tbody>{sm.goals.map(g=>{
+              const p=g.target>0?Math.min(100,Math.round((g.current/g.target)*100)):null;
+              return (
+                <tr key={g.id}>
+                  <td>{g.label}{g.unit?<span style={{ color:C.muted,fontSize:11 }}> / {g.unit}</span>:""}</td>
+                  <td>{p!==null?<span style={{ fontFamily:"'Playfair Display',serif",color:C.gold,fontSize:14 }}>{p}%</span>:"—"}</td>
+                  <td style={{ color:C.muted,fontSize:12 }}>{g.current?.toLocaleString()} → {g.target?.toLocaleString()}</td>
+                  <td style={{ color:C.muted,fontSize:12 }}>{sm.phases?.find(p=>p.id===g.phase)?.name||"—"}</td>
+                  <td><div style={{ display:"flex",gap:6 }}>
+                    <button className="btn-sm" onClick={()=>openGoalEdit(g)}>Edit</button>
+                    <button className="btn-del" onClick={()=>deleteGoal(g.id)}>Del</button>
+                  </div></td>
+                </tr>
+              );
+            })}</tbody>
           </table>
         )}
-        {modal==="goal"&&<GoalModal entry={editItem} onClose={()=>{setModal(null);setEditItem(null);}} onSave={s=>{update({strategyMap:{...sm,goals:editItem?sm.goals.map(x=>x.id===s.id?s:x):[...(sm.goals||[]),s]}});setModal(null);setEditItem(null);}}/>}
       </div>
     );
   };
@@ -2884,23 +3172,37 @@ function AdminClientEditor({ client, users, onUpdate, activeSection, onSectionCh
 
   // ── Settings ──
   const SettingsSection=()=>{
-    const [form,setForm]=useState({name:client.name,tier:client.tier});
+    const [form,setForm]=useState({name:client.name,tier:client.tier,bookTitle:client.bookTitle||"",bookSubtitle:client.bookSubtitle||"",bookGenre:client.bookGenre||"",bookLogline:client.bookLogline||"",manuscriptNotes:client.manuscriptNotes||"",estimatedCompletion:client.estimatedCompletion||""});
     const set=(k,v)=>setForm(f=>({...f,[k]:v}));
-    const manuscript=isManuscript(client.tier);
+    const manuscript=isManuscript(form.tier);
     return (
       <div>
         <FormRow label="Client Name"><input className="ks-field" value={form.name} onChange={e=>set("name",e.target.value)}/></FormRow>
         <FormRow label="Service Tier"><select className="ks-field" value={form.tier} onChange={e=>set("tier",e.target.value)}>{TIERS.map(t=><option key={t} value={t}>{TIER_LABELS[t]}</option>)}</select></FormRow>
         {manuscript&&(
-          <div style={{ padding:"14px 18px",background:"rgba(201,168,76,0.04)",border:`1px solid ${C.goldBorder}`,marginBottom:18 }}>
-            <div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.muted,marginBottom:6 }}>Client Preference</div>
-            <div style={{ display:"flex",alignItems:"center",gap:12 }}>
-              <span style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.dim,flex:1 }}>Async Mode — client prefers written updates over scheduled meetings</span>
-              <span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.1em",color:client.asyncMode?C.gold:"rgba(255,255,255,0.35)",background:client.asyncMode?"rgba(201,168,76,0.12)":"rgba(255,255,255,0.04)",border:`1px solid ${client.asyncMode?C.gold:"rgba(255,255,255,0.1)"}`,padding:"4px 10px" }}>{client.asyncMode?"◉ ON":"○ OFF"}</span>
+          <>
+            <GoldRule my={20}/>
+            <div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.muted,marginBottom:16 }}>Book Details — Shown on client home page</div>
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12 }}>
+              <FormRow label="Book Title"><input className="ks-field" value={form.bookTitle} onChange={e=>set("bookTitle",e.target.value)} placeholder="Working title"/></FormRow>
+              <FormRow label="Subtitle (optional)"><input className="ks-field" value={form.bookSubtitle} onChange={e=>set("bookSubtitle",e.target.value)} placeholder="e.g. A Memoir"/></FormRow>
             </div>
-          </div>
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12 }}>
+              <FormRow label="Genre"><input className="ks-field" value={form.bookGenre} onChange={e=>set("bookGenre",e.target.value)} placeholder="e.g. Business Non-Fiction"/></FormRow>
+              <FormRow label="Estimated Completion"><input className="ks-field" value={form.estimatedCompletion} onChange={e=>set("estimatedCompletion",e.target.value)} placeholder="e.g. Q3 2025"/></FormRow>
+            </div>
+            <FormRow label="Logline" hint="One sentence describing the book — shown on client home."><textarea className="ks-field" rows={2} value={form.bookLogline} onChange={e=>set("bookLogline",e.target.value)} placeholder="The story of…"/></FormRow>
+            <FormRow label="Note to Client" hint="Shown as 'From Mikaela' on the home page. Keep it encouraging."><textarea className="ks-field" rows={3} value={form.manuscriptNotes} onChange={e=>set("manuscriptNotes",e.target.value)} placeholder="A short note about where things stand…"/></FormRow>
+            <div style={{ marginTop:8,marginBottom:20,padding:"14px 18px",background:"rgba(201,168,76,0.04)",border:`1px solid ${C.goldBorder}` }}>
+              <div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.muted,marginBottom:6 }}>Async Mode</div>
+              <div style={{ display:"flex",alignItems:"center",gap:12 }}>
+                <span style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.dim,flex:1 }}>Client prefers written updates over scheduled meetings</span>
+                <span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.1em",color:client.asyncMode?C.gold:"rgba(255,255,255,0.35)",background:client.asyncMode?"rgba(201,168,76,0.12)":"rgba(255,255,255,0.04)",border:`1px solid ${client.asyncMode?C.gold:"rgba(255,255,255,0.1)"}`,padding:"4px 10px" }}>{client.asyncMode?"◉ ON":"○ OFF"}</span>
+              </div>
+            </div>
+          </>
         )}
-        <button className="btn-gold" onClick={()=>update({name:form.name,tier:form.tier})}>Save Settings</button>
+        <button className="btn-gold" onClick={()=>update({name:form.name,tier:form.tier,bookTitle:form.bookTitle,bookSubtitle:form.bookSubtitle,bookGenre:form.bookGenre,bookLogline:form.bookLogline,manuscriptNotes:form.manuscriptNotes,estimatedCompletion:form.estimatedCompletion})}>Save Settings</button>
       </div>
     );
   };
@@ -2966,28 +3268,27 @@ function ClientDashboard({ client, session, onLogout, onUpdate, apiKey }) {
       { key:"calendar",label:"Calendar",icon:"◷",active:view==="calendar",onClick:()=>setView("calendar"),badge:unreadMessages||null },
     ]},
     ...(branding?[{ label:"Content",items:[
-      { key:"content",label:"Content",icon:"◈",active:view==="content",onClick:()=>setView("content"),badge:pendingApprovals||null },
+      { key:"content",label:"Content",active:view==="content",onClick:()=>setView("content"),badge:pendingApprovals||null },
       { key:"performance",label:"Performance",active:view==="performance",onClick:()=>setView("performance") },
-      { key:"publications",label:"In the Press",active:view==="publications",onClick:()=>setView("publications") },
+      ...(hasAuthority(client.tier)?[{ key:"publications",label:"In the Press",active:view==="publications",onClick:()=>setView("publications") }]:[]),
     ]}]:[]),
-    ...(authority?[{ label:"Brand",items:[
+    ...(branding&&hasAuthority(client.tier)?[{ label:"Brand",items:[
       { key:"milestones",label:"Milestones",active:view==="milestones",onClick:()=>setView("milestones") },
-      ...(influence?[
-        { key:"strategy",label:"Strategy Map",active:view==="strategy",onClick:()=>setView("strategy") },
-        { key:"ai",label:"AI Visibility",active:view==="ai",onClick:()=>setView("ai") },
-      ]:[]),
+      { key:"strategy",label:"Strategy Map",active:view==="strategy",onClick:()=>setView("strategy") },
+      ...(influence?[{ key:"ai",label:"AI Visibility",active:view==="ai",onClick:()=>setView("ai") }]:[]),
+      { key:"timeline",label:"Results Timeline",active:view==="timeline",onClick:()=>setView("timeline") },
+      { key:"voice",label:"Brand Voice",active:view==="voice",onClick:()=>setView("voice"),badge:unansweredIdeas||null },
+    ]}]:[]),
+    ...(branding&&!hasAuthority(client.tier)?[{ label:"Brand",items:[
+      { key:"voice",label:"Brand Voice",active:view==="voice",onClick:()=>setView("voice"),badge:unansweredIdeas||null },
     ]}]:[]),
     ...(manuscript?[{ label:"Manuscript",items:[
-      { key:"manuscript",label:"Manuscript",active:view==="manuscript",onClick:()=>setView("manuscript") },
+      { key:"manuscript",label:"Chapters",active:view==="manuscript",onClick:()=>setView("manuscript") },
       { key:"pipeline",label:"Production Pipeline",active:view==="pipeline",onClick:()=>setView("pipeline") },
       ...(client.tier==="coaching"?[{ key:"coaching",label:"Book Coaching",active:view==="coaching",onClick:()=>setView("coaching"),badge:((client.writingAssignments||[]).filter(a=>a.status!=="Complete").length)||null }]:[]),
     ]}]:[]),
-    { label:"Your Space",items:[
-      { key:"voice",label:"Brand Voice",icon:"◇",active:view==="voice",onClick:()=>setView("voice"),badge:unansweredIdeas||null },
-      { key:"timeline",label:"Results Timeline",active:view==="timeline",onClick:()=>setView("timeline") },
-      { key:"documents",label:"Documents",active:view==="documents",onClick:()=>setView("documents") },
-    ]},
     { label:"Account",items:[
+      { key:"documents",label:"Documents",active:view==="documents",onClick:()=>setView("documents") },
       { key:"preferences",label:"Preferences",active:view==="preferences",onClick:()=>setView("preferences") },
     ]},
   ];
