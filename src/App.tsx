@@ -106,6 +106,34 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
     .upload-zone { border:1px dashed rgba(201,168,76,0.3); padding:28px; text-align:center; cursor:pointer; transition:all 0.2s; background:rgba(201,168,76,0.02); }
     .upload-zone:hover { border-color:rgba(201,168,76,0.6); background:rgba(201,168,76,0.06); }
 
+    /* Collapsible nav section header */
+    .nav-section-toggle { display:flex; align-items:center; justify-content:space-between; padding:14px 20px 5px; font-family:'Lato',sans-serif; font-size:9px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:rgba(255,255,255,0.25); cursor:pointer; user-select:none; transition:color 0.15s; }
+    .nav-section-toggle:hover { color:rgba(255,255,255,0.45); }
+    .nav-section-toggle .toggle-arrow { font-size:8px; transition:transform 0.18s; }
+    .nav-section-toggle.collapsed .toggle-arrow { transform:rotate(-90deg); }
+
+    /* Calendar tooltip */
+    .cal-tooltip { position:absolute; z-index:200; background:#26011e; border:1px solid rgba(201,168,76,0.35); padding:10px 14px; pointer-events:none; white-space:nowrap; box-shadow:0 8px 24px rgba(0,0,0,0.5); min-width:160px; max-width:260px; white-space:normal; }
+
+    /* Chapter revision row */
+    .ch-revision { padding:8px 12px; background:rgba(255,255,255,0.02); border-left:2px solid rgba(201,168,76,0.2); margin-bottom:4px; }
+    .ch-revision:hover { background:rgba(255,255,255,0.04); }
+
+    /* Bar graph */
+    .bar-graph-bar { transition:height 0.7s cubic-bezier(0.16,1,0.3,1); position:relative; cursor:default; }
+    .bar-graph-bar:hover { opacity:0.85; }
+
+    /* Document category badge */
+    .doc-category { display:inline-block; font-family:'Lato',sans-serif; font-size:9px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; padding:2px 7px; background:rgba(201,168,76,0.08); border:1px solid rgba(201,168,76,0.18); color:rgba(201,168,76,0.7); margin-right:6px; }
+    .doc-category.admin-only { background:rgba(200,100,80,0.08); border-color:rgba(200,100,80,0.25); color:rgba(230,150,130,0.7); }
+
+    /* Three-state content row */
+    .content-row-summary { overflow:hidden; transition:max-height 0.3s ease; }
+
+    /* Roster group header */
+    .roster-group-header { display:flex; align-items:center; justify-content:space-between; padding:14px 0 10px; cursor:pointer; user-select:none; border-bottom:1px solid rgba(201,168,76,0.12); margin-bottom:4px; }
+    .roster-group-header:hover .roster-group-label { color:rgba(255,255,255,0.75); }
+
     @media (max-width:768px) {
       .sidebar { position:fixed !important; left:0; top:0; height:100vh; transform:translateX(-100%); transition:transform 0.28s cubic-bezier(0.16,1,0.3,1); z-index:150; }
       .sidebar.mob-open { transform:translateX(0); }
@@ -211,6 +239,7 @@ const mkClient = o => ({
   coachingDrafts:[],
   sessionNotes:[],
   writingAssignments:[],
+  outreachStats:{ pitchesSent:0, responsesReceived:0, placementsSecured:0, period:"", notes:"" },
   ...o,
 });
 
@@ -542,6 +571,8 @@ function TagInput({ tags, onChange, placeholder, avoid }) {
 // SIDEBAR COMPONENT (shared admin + client)
 // ─────────────────────────────────────────────────────────────
 function Sidebar({ logo, name, badge, navSections, onLogout, savedIndicator, mobileOpen, onMobileClose }) {
+  const [collapsed, setCollapsed] = useState({});
+  const toggle = label => setCollapsed(p => ({ ...p, [label]: !p[label] }));
   return (
     <>
       {mobileOpen&&<div onClick={onMobileClose} style={{ position:"fixed",inset:0,background:"rgba(24,0,19,0.7)",zIndex:149 }} className="mob-overlay"/>}
@@ -557,18 +588,26 @@ function Sidebar({ logo, name, badge, navSections, onLogout, savedIndicator, mob
         </div>
         <GoldRule my={0} />
         <nav style={{ flex:1,paddingTop:6,overflowY:"auto" }}>
-          {navSections.map((section,si)=>(
-            <div key={si}>
-              {section.label && <div className="nav-section">{section.label}</div>}
-              {section.items.map(item=>(
-                <div key={item.key} className={`nav-item ${item.active?"active":""}`} onClick={()=>{ item.onClick(); onMobileClose&&onMobileClose(); }}>
-                  {item.icon && <span style={{ fontSize:12,opacity:0.7 }}>{item.icon}</span>}
-                  {item.label}
-                  {item.badge && <span style={{ marginLeft:"auto",background:"rgba(201,168,76,0.18)",color:C.gold,fontSize:9,fontWeight:700,padding:"1px 6px",borderRadius:8 }}>{item.badge}</span>}
-                </div>
-              ))}
-            </div>
-          ))}
+          {navSections.map((section,si)=>{
+            const isCollapsed = section.label ? !!collapsed[section.label] : false;
+            return (
+              <div key={si}>
+                {section.label ? (
+                  <div className={`nav-section-toggle${isCollapsed?" collapsed":""}`} onClick={()=>toggle(section.label)}>
+                    <span>{section.label}</span>
+                    {section.items.length > 0 && <span className="toggle-arrow">▾</span>}
+                  </div>
+                ) : null}
+                {!isCollapsed && section.items.map(item=>(
+                  <div key={item.key} className={`nav-item ${item.active?"active":""}`} onClick={()=>{ item.onClick(); onMobileClose&&onMobileClose(); }}>
+                    {item.icon && <span style={{ fontSize:12,opacity:0.7 }}>{item.icon}</span>}
+                    {item.label}
+                    {item.badge && <span style={{ marginLeft:"auto",background:"rgba(201,168,76,0.18)",color:C.gold,fontSize:9,fontWeight:700,padding:"1px 6px",borderRadius:8 }}>{item.badge}</span>}
+                  </div>
+                ))}
+              </div>
+            );
+          })}
         </nav>
         <div style={{ padding:"14px 20px",borderTop:`1px solid ${C.goldBorder}` }}>
           {savedIndicator && <div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,color:C.gold,letterSpacing:"0.1em",textAlign:"center",marginBottom:10 }}>✓ Saved</div>}
@@ -588,6 +627,7 @@ function CalendarView({ client, isAdmin, session, onUpdate }) {
   const [selected, setSelected] = useState(null);
   const [showAddMeeting, setShowAddMeeting] = useState(false);
   const [newMsg, setNewMsg] = useState("");
+  const [tooltip, setTooltip] = useState(null); // { x, y, content }
 
   const year = curDate.getFullYear();
   const month = curDate.getMonth();
@@ -677,6 +717,8 @@ function CalendarView({ client, isAdmin, session, onUpdate }) {
                   <button key={item.id} className="cal-event" draggable={isAdmin}
                     onDragStart={e=>{_drag={type:"content",id:item.id};e.dataTransfer.effectAllowed="move";}}
                     onClick={()=>setSelected({type:"content",data:item})}
+                    onMouseEnter={e=>{const r=e.currentTarget.getBoundingClientRect();setTooltip({x:r.left,y:r.bottom+6,content:{title:item.title,sub:`${item.type} · ${item.status}`,note:item.revisionNotes||""}});}}
+                    onMouseLeave={()=>setTooltip(null)}
                     style={{ background:`${statusColor(item.status)}15`,color:statusColor(item.status),border:`1px solid ${statusColor(item.status)}30` }}>
                     {item.title}
                   </button>
@@ -685,6 +727,8 @@ function CalendarView({ client, isAdmin, session, onUpdate }) {
                   <button key={m.id} className="cal-event" draggable={isAdmin}
                     onDragStart={e=>{_drag={type:"meeting",id:m.id};e.dataTransfer.effectAllowed="move";}}
                     onClick={()=>setSelected({type:"meeting",data:m})}
+                    onMouseEnter={e=>{const r=e.currentTarget.getBoundingClientRect();setTooltip({x:r.left,y:r.bottom+6,content:{title:m.title,sub:m.time?`${m.date} · ${m.time}`:m.date,note:m.description||""}});}}
+                    onMouseLeave={()=>setTooltip(null)}
                     style={{ background:"rgba(122,154,175,0.14)",color:"#9abacf",border:"1px solid rgba(122,154,175,0.25)" }}>
                     ◷ {m.title}
                   </button>
@@ -693,6 +737,8 @@ function CalendarView({ client, isAdmin, session, onUpdate }) {
                   <button key={m.id} className="cal-event" draggable={true}
                     onDragStart={e=>{_drag={type:"milestone",id:m.id};e.dataTransfer.effectAllowed="move";}}
                     onClick={()=>setSelected({type:"milestone",data:m})}
+                    onMouseEnter={e=>{const r=e.currentTarget.getBoundingClientRect();setTooltip({x:r.left,y:r.bottom+6,content:{title:m.name,sub:`Milestone · ${m.status}`,note:""}});}}
+                    onMouseLeave={()=>setTooltip(null)}
                     style={{ background:"rgba(130,208,130,0.1)",color:"#82d082",border:"1px solid rgba(130,208,130,0.22)" }}>
                     ◆ {m.name}
                   </button>
@@ -757,6 +803,14 @@ function CalendarView({ client, isAdmin, session, onUpdate }) {
       )}
       {showAddMeeting&&isAdmin&&(
         <MeetingModal onClose={()=>setShowAddMeeting(false)} onSave={m=>{onUpdate({...client,meetings:[...(client.meetings||[]),m]});setShowAddMeeting(false);}}/>
+      )}
+      {/* Hover tooltip */}
+      {tooltip&&(
+        <div className="cal-tooltip" style={{ position:"fixed",left:Math.min(tooltip.x,window.innerWidth-270),top:tooltip.y,zIndex:400 }}>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:15,color:C.text,marginBottom:4 }}>{tooltip.content.title}</div>
+          {tooltip.content.sub&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,color:C.muted,letterSpacing:"0.08em" }}>{tooltip.content.sub}</div>}
+          {tooltip.content.note&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:"#d88860",fontStyle:"italic",marginTop:5 }}>{tooltip.content.note}</div>}
+        </div>
       )}
     </div>
   );
@@ -924,17 +978,17 @@ function DirectMessagesView({ client, session, onUpdate }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// MEDIA PLAYBOOK VIEW (client-read)
+// PRESS GUIDANCE (reference document, formerly Media Playbook)
 // ─────────────────────────────────────────────────────────────
-function MediaPlaybookView({ client }) {
+function PressGuidanceView({ client }) {
   const pb=client.mediaPlaybook||{sections:[]};
   const [open,setOpen]=useState({});
   const toggle=id=>setOpen(p=>({...p,[id]:!p[id]}));
   return (
     <div className="ks-up">
-      <SectionHeading sub="Your guide to navigating media situations — know exactly what to do when it matters">Media Playbook</SectionHeading>
+      <SectionHeading sub="Your reference guide for navigating media situations — know exactly what to do when it matters">Press Guidance</SectionHeading>
       {pb.sections.length===0?(
-        <EmptyState message="Your Media Playbook will be built out by Mikaela. It covers how to handle journalist inquiries, content questions, and anything that comes up in the public eye." icon="◎"/>
+        <EmptyState message="Your Press Guidance document will be built out by Mikaela. It covers how to handle journalist inquiries, content questions, and anything that comes up in the public eye." icon="◎"/>
       ):(
         <div>
           <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.dim,lineHeight:1.7,marginBottom:28,fontStyle:"italic" }}>
@@ -967,12 +1021,18 @@ function ContentView({ client, isAdmin, onUpdate }) {
   const [filter,setFilter]=useState("All");
   const [revModal,setRevModal]=useState(null);
   const [revNote,setRevNote]=useState("");
-  const [expanded,setExpanded]=useState({});
-  const toggleExpand=id=>setExpanded(p=>({...p,[id]:!p[id]}));
+  // Three states per item: 0 = title only, 1 = summary (type/date/status), 2 = full body
+  const [expandState,setExpandState]=useState({});
+  const cycleExpand=id=>setExpandState(p=>({...p,[id]:((p[id]||0)+1)%3}));
   const isFoundation=client.tier==="foundation";
   const items=filter==="All"?client.contentCalendar:client.contentCalendar.filter(i=>i.status===filter||i.approvalStatus===filter);
   const updateItem=(id,patch)=>onUpdate({...client,contentCalendar:client.contentCalendar.map(i=>i.id===id?{...i,...patch}:i)});
   const pendingCount=client.contentCalendar.filter(i=>i.approvalStatus==="Pending Approval").length;
+  const expandLabel=(id,hasBody)=>{
+    const s=expandState[id]||0;
+    if(!hasBody) return s===0?"Details ↓":"Hide ↑";
+    return s===0?"Details ↓":s===1?"Read ↓":"Hide ↑";
+  };
   return (
     <div className="ks-up">
       <SectionHeading>Content Output</SectionHeading>
@@ -996,27 +1056,29 @@ function ContentView({ client, isAdmin, onUpdate }) {
         ))}
       </div>
       {items.length===0?<EmptyState message="No content in this category." icon="◈"/>:(
-        items.map(item=>(
-          <div key={item.id} style={{ padding:"16px 0",borderBottom:`1px solid rgba(255,255,255,0.05)` }}>
+        items.map(item=>{
+          const st=expandState[item.id]||0;
+          return (
+          <div key={item.id} style={{ padding:"14px 0",borderBottom:`1px solid rgba(255,255,255,0.05)` }}>
             <div style={{ display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:16,flexWrap:"wrap" }}>
               <div style={{ flex:1 }}>
-                <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:18,color:C.text,marginBottom:6 }}>{item.title}</div>
-                <div style={{ display:"flex",gap:8,flexWrap:"wrap",alignItems:"center" }}>
+                <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:18,color:C.text,marginBottom:st>0?6:0 }}>{item.title}</div>
+                {st>0&&<div style={{ display:"flex",gap:8,flexWrap:"wrap",alignItems:"center" }}>
                   <span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted }}>{item.type}</span>
                   <span style={{ color:C.muted }}>·</span>
                   <span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted }}>{fmtDate(item.scheduledDate)}</span>
                   <StatusBadge status={item.status}/>
                   <StatusBadge status={item.approvalStatus||"Pending Approval"}/>
-                </div>
-                {item.revisionNotes&&<div style={{ marginTop:8,fontFamily:"'Lato',sans-serif",fontSize:12,color:"#d88860",fontStyle:"italic" }}>Revision: "{item.revisionNotes}"</div>}
+                </div>}
+                {st>0&&item.revisionNotes&&<div style={{ marginTop:8,fontFamily:"'Lato',sans-serif",fontSize:12,color:"#d88860",fontStyle:"italic" }}>Revision: "{item.revisionNotes}"</div>}
               </div>
               <div style={{ display:"flex",gap:6,flexShrink:0,flexWrap:"wrap",alignItems:"center" }}>
-                {item.link&&<a href={item.link} target="_blank" rel="noreferrer" className="btn-sm" style={{ textDecoration:"none" }}>View</a>}
-                {item.body&&<button className="btn-sm" onClick={()=>toggleExpand(item.id)}>{expanded[item.id]?"Hide ↑":"Read ↓"}</button>}
-                {!isAdmin&&!isFoundation&&item.approvalStatus!=="Approved"&&<><button className="btn-approve" onClick={()=>updateItem(item.id,{approvalStatus:"Approved",revisionNotes:""})}>Approve</button><button className="btn-revise" onClick={()=>{setRevModal(item);setRevNote("");}}>Revision</button></>}
+                {st>0&&item.link&&<a href={item.link} target="_blank" rel="noreferrer" className="btn-sm" style={{ textDecoration:"none" }}>View</a>}
+                <button className="btn-sm" onClick={()=>cycleExpand(item.id)}>{expandLabel(item.id,!!item.body)}</button>
+                {st>0&&!isAdmin&&!isFoundation&&item.approvalStatus!=="Approved"&&<><button className="btn-approve" onClick={()=>updateItem(item.id,{approvalStatus:"Approved",revisionNotes:""})}>Approve</button><button className="btn-revise" onClick={()=>{setRevModal(item);setRevNote("");}}>Revision</button></>}
               </div>
             </div>
-            {expanded[item.id]&&(
+            {st===2&&(
               <div className="ks-in" style={{ marginTop:16 }}>
                 {item.imageUrl&&isBranding(client.tier)&&(
                   <div style={{ marginBottom:14 }}>
@@ -1032,7 +1094,8 @@ function ContentView({ client, isAdmin, onUpdate }) {
               </div>
             )}
           </div>
-        ))
+          );
+        })
       )}
       {revModal&&(
         <Modal title="Request Revision" onClose={()=>setRevModal(null)}>
@@ -1057,6 +1120,30 @@ function PerformanceView({ client }) {
   const latest=stats[stats.length-1];
   const prev=stats[stats.length-2];
   const delta=key=>{if(!latest||!prev)return null;const d=latest[key]-prev[key];return d>0?`+${d.toLocaleString()}`:d.toString();};
+  const influence=hasInfluence(client.tier);
+
+  // Monthly bar graph data: content published per month
+  const monthlyData = useMemo(() => {
+    const map = {};
+    (client.contentCalendar||[]).filter(i=>i.status==="Published"&&i.scheduledDate).forEach(i=>{
+      const d=new Date(i.scheduledDate+"T12:00:00");
+      const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+      map[key]=(map[key]||0)+1;
+    });
+    // Last 6 months
+    const result=[];
+    const now=new Date();
+    for(let i=5;i>=0;i--){
+      const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+      const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+      result.push({ key, label:d.toLocaleDateString("en-US",{month:"short"}), count:map[key]||0 });
+    }
+    return result;
+  },[client.contentCalendar]);
+
+  const maxCount = Math.max(...monthlyData.map(m=>m.count),1);
+  const outreach = client.outreachStats||{ pitchesSent:0, responsesReceived:0, placementsSecured:0, period:"" };
+
   return (
     <div className="ks-up">
       <SectionHeading>Performance</SectionHeading>
@@ -1070,6 +1157,45 @@ function PerformanceView({ client }) {
         {r.summary&&<div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:300,color:C.dim,lineHeight:1.75,fontStyle:"italic",marginBottom:28 }}>" {r.summary} "</div>}
         <GoldRule/>
       </>}
+
+      {/* Monthly content bar graph */}
+      <div style={{ marginBottom:32,marginTop:r.period?28:0 }}>
+        <Label>Monthly Output — Published Pieces</Label>
+        <div style={{ display:"flex",alignItems:"flex-end",gap:6,height:80,paddingBottom:20,position:"relative" }}>
+          {monthlyData.map((m,i)=>{
+            const h=Math.round((m.count/maxCount)*56)+4;
+            return (
+              <div key={m.key} style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:0,position:"relative" }}>
+                <div style={{ width:"100%",height:h,background:`linear-gradient(180deg,${C.goldL}66,${C.gold}99)`,borderRadius:"1px 1px 0 0",transition:"height 0.7s cubic-bezier(0.16,1,0.3,1)",position:"relative" }}>
+                  {m.count>0&&<div style={{ position:"absolute",top:-20,left:"50%",transform:"translateX(-50%)",fontFamily:"'Playfair Display',serif",fontSize:12,color:C.gold,whiteSpace:"nowrap" }}>{m.count}</div>}
+                </div>
+                <div style={{ fontFamily:"'Lato',sans-serif",fontSize:9,color:C.muted,textAlign:"center",marginTop:5,letterSpacing:"0.06em" }}>{m.label}</div>
+              </div>
+            );
+          })}
+          {/* Zero line */}
+          <div style={{ position:"absolute",bottom:20,left:0,right:0,height:1,background:"rgba(201,168,76,0.1)" }}/>
+        </div>
+      </div>
+
+      {/* Outreach stats — Influence tier only */}
+      {influence&&(
+        <>
+          <GoldRule/>
+          <div style={{ marginTop:28,marginBottom:28 }}>
+            <SectionHeading sub={outreach.period||"Outreach & pitch performance"}>Outreach Stats</SectionHeading>
+            <div style={{ display:"flex",gap:24,flexWrap:"wrap" }}>
+              <Stat label="Pitches Sent" value={outreach.pitchesSent||"—"}/>
+              <Stat label="Responses Received" value={outreach.responsesReceived||"—"}/>
+              <Stat label="Placements Secured" value={outreach.placementsSecured||"—"}/>
+              {outreach.pitchesSent>0&&outreach.placementsSecured>0&&<Stat label="Conversion Rate" value={`${Math.round((outreach.placementsSecured/outreach.pitchesSent)*100)}%`}/>}
+            </div>
+            {outreach.notes&&<div style={{ marginTop:16,fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:15,color:C.dim,lineHeight:1.7 }}>{outreach.notes}</div>}
+          </div>
+          <GoldRule/>
+        </>
+      )}
+
       <SectionHeading sub="Updated manually from LinkedIn Analytics">LinkedIn Analytics</SectionHeading>
       {!latest?<EmptyState message="LinkedIn stats will appear here once updated." icon="📊"/>:<>
         <div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,color:C.muted,marginBottom:18 }}>Last updated: {fmtDate(latest.date)}</div>
@@ -1099,14 +1225,14 @@ function PerformanceView({ client }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// PUBLICATION WINS
+// IN THE PRESS (publication log)
 // ─────────────────────────────────────────────────────────────
-function PublicationWinsView({ client }) {
+function InThePressView({ client }) {
   const sorted=[...client.publicationLog].sort((a,b)=>new Date(b.date)-new Date(a.date));
   return (
     <div className="ks-up">
-      <SectionHeading sub="Every placed piece, logged as a permanent record of your work">Publication Wins</SectionHeading>
-      {sorted.length===0?<EmptyState message="Your first placed article will appear here." icon="◉"/>:(
+      <SectionHeading sub="Every placed piece — a permanent record of your public voice">In the Press</SectionHeading>
+      {sorted.length===0?<EmptyState message="Your first placed piece will appear here." icon="◉"/>:(
         <table className="ks-table">
           <thead><tr><th>Outlet</th><th>Title</th><th>Date</th><th></th></tr></thead>
           <tbody>{sorted.map(p=>(
@@ -1126,19 +1252,73 @@ function PublicationWinsView({ client }) {
 // ─────────────────────────────────────────────────────────────
 // MILESTONES
 // ─────────────────────────────────────────────────────────────
-function MilestonesView({ client }) {
+function MilestonesView({ client, isAdmin, onUpdate }) {
+  const [draftName, setDraftName] = useState("");
+  const [showDraft, setShowDraft] = useState(false);
   const order={ Complete:0,"In Progress":1,"Not Started":2 };
-  const sorted=[...client.milestones].sort((a,b)=>order[a.status]-order[b.status]);
+  const sorted=[...client.milestones].sort((a,b)=>(order[a.status]||3)-(order[b.status]||3));
+
+  const submitDraft=()=>{
+    if(!draftName.trim()) return;
+    const m={id:uid(),name:draftName.trim(),status:"Not Started",completionDate:"",submittedByClient:true,clientDraft:false};
+    onUpdate({...client,milestones:[...client.milestones,m]});
+    setDraftName(""); setShowDraft(false);
+  };
+
+  const confirmMilestone=(id)=>onUpdate({...client,milestones:client.milestones.map(m=>m.id===id?{...m,submittedByClient:false}:m)});
+
+  const pendingSubmissions=sorted.filter(m=>m.submittedByClient);
+
   return (
     <div className="ks-up">
       <SectionHeading>Milestone Tracker</SectionHeading>
-      {sorted.length===0?<EmptyState message="Milestones will appear here." icon="◆"/>:sorted.map(m=>(
+
+      {/* Admin: pending submissions banner */}
+      {isAdmin&&pendingSubmissions.length>0&&(
+        <div style={{ padding:"14px 18px",background:"rgba(201,168,76,0.07)",border:`1px solid rgba(201,168,76,0.25)`,marginBottom:24 }}>
+          <div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.gold,marginBottom:8 }}>
+            {pendingSubmissions.length} Client-Submitted Milestone{pendingSubmissions.length!==1?"s":""} — Review & Confirm
+          </div>
+          {pendingSubmissions.map(m=>(
+            <div key={m.id} style={{ display:"flex",alignItems:"center",gap:10,justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid rgba(201,168,76,0.1)" }}>
+              <span style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.text }}>{m.name}</span>
+              <div style={{ display:"flex",gap:6 }}>
+                <button className="btn-approve" onClick={()=>confirmMilestone(m.id)}>Confirm</button>
+                <button className="btn-del" onClick={()=>onUpdate({...client,milestones:client.milestones.filter(x=>x.id!==m.id)})}>Del</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Client: propose a milestone */}
+      {!isAdmin&&(
+        <div style={{ marginBottom:24 }}>
+          {showDraft?(
+            <div style={{ padding:"16px 20px",background:"rgba(201,168,76,0.05)",border:`1px solid rgba(201,168,76,0.18)` }}>
+              <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,marginBottom:10 }}>What milestone do you want to propose to Mikaela?</div>
+              <div style={{ display:"flex",gap:8 }}>
+                <input className="ks-field" value={draftName} onChange={e=>setDraftName(e.target.value)} placeholder="e.g. First Forbes placement, 10K LinkedIn followers…" style={{ flex:1 }} onKeyDown={e=>e.key==="Enter"&&submitDraft()}/>
+                <button className="btn-gold" onClick={submitDraft} disabled={!draftName.trim()} style={{ padding:"9px 18px" }}>Submit</button>
+                <button className="btn-ghost" onClick={()=>{setShowDraft(false);setDraftName("");}}>Cancel</button>
+              </div>
+            </div>
+          ):(
+            <button className="btn-ghost" onClick={()=>setShowDraft(true)} style={{ fontSize:10 }}>+ Propose a Milestone</button>
+          )}
+        </div>
+      )}
+
+      {sorted.length===0?<EmptyState message="Milestones will appear here." icon="◆"/>:sorted.filter(m=>!(m.submittedByClient&&isAdmin)).map(m=>(
         <div key={m.id} style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 0",borderBottom:`1px solid rgba(255,255,255,0.05)`,gap:16 }}>
           <div style={{ display:"flex",alignItems:"center",gap:14,flex:1 }}>
             <div style={{ width:8,height:8,borderRadius:"50%",background:m.status==="Complete"?C.gold:m.status==="In Progress"?"#c9a84c88":"rgba(255,255,255,0.18)",flexShrink:0 }}/>
             <div>
-              <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:m.status==="Complete"?C.text:C.dim }}>{m.name}</div>
-              {m.completionDate&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,marginTop:2 }}>Completed {fmtDate(m.completionDate)}</div>}
+              <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+                <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:m.status==="Complete"?C.text:C.dim }}>{m.name}</div>
+                {m.submittedByClient&&!isAdmin&&<span style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:"rgba(201,168,76,0.6)",background:"rgba(201,168,76,0.08)",border:"1px solid rgba(201,168,76,0.2)",padding:"2px 6px" }}>Proposed</span>}
+              </div>
+              {m.completionDate&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,marginTop:2 }}>{m.status==="Complete"?"Completed":"Target:"} {fmtDate(m.completionDate)}</div>}
             </div>
           </div>
           <StatusBadge status={m.status}/>
@@ -1266,6 +1446,7 @@ function BrandVoiceView({ client, isAdmin, onUpdate, apiKey }) {
   const [wsLoading,setWsLoading]=useState(false);
   const [wsResult,setWsResult]=useState(bv.whiteSpaceCache||null);
   const [wsError,setWsError]=useState("");
+  const [wsMode,setWsMode]=useState("branding");
 
   const save=()=>{ onUpdate({...client,brandVoice:form}); setEditing(false); };
 
@@ -1287,7 +1468,12 @@ function BrandVoiceView({ client, isAdmin, onUpdate, apiKey }) {
   const runWhiteSpace=async()=>{
     if(!wsIndustry.trim()) return;
     setWsLoading(true); setWsError(""); setWsResult(null);
-    const prompt=`You are a brand strategist and ghostwriter. A client works in: "${wsIndustry}"${wsNiche?`, specifically in the niche: "${wsNiche}"`:""}.\n\nAnalyze this space and identify:\n1. OVERSATURATED angles (what everyone is writing about — the noise)\n2. WHITE SPACE opportunities (underexplored angles that could build a distinctive brand voice)\n3. CONTRARIAN takes worth exploring\n4. EMERGING conversations that aren't crowded yet\n\nRespond in this exact JSON format with no other text:\n{\n  "oversaturated": ["angle1","angle2","angle3","angle4","angle5"],\n  "whiteSpace": [{"angle":"...","why":"..."},{"angle":"...","why":"..."},{"angle":"...","why":"..."},{"angle":"...","why":"..."}],\n  "contrarian": ["take1","take2","take3"],\n  "emerging": ["topic1","topic2","topic3"]\n}`;
+    let prompt;
+    if(wsMode==="book") {
+      prompt=`You are a book strategist and literary agent advisor. A client is writing a book in the category: "${wsIndustry}"${wsNiche?`, with this perspective/angle: "${wsNiche}"`:""}.\n\nAnalyze the current book market in this category and identify:\n1. OVERSATURATED angles (what every book in this space covers — the crowded middle)\n2. WHITE SPACE opportunities (underexplored angles, perspectives, or structures that could make a book stand out)\n3. CONTRARIAN positions worth staking out\n4. EMERGING reader interests not yet fully served\n\nRespond in this exact JSON format with no other text:\n{\n  "oversaturated": ["angle1","angle2","angle3","angle4","angle5"],\n  "whiteSpace": [{"angle":"...","why":"..."},{"angle":"...","why":"..."},{"angle":"...","why":"..."},{"angle":"...","why":"..."}],\n  "contrarian": ["take1","take2","take3"],\n  "emerging": ["topic1","topic2","topic3"]\n}`;
+    } else {
+      prompt=`You are a brand strategist and ghostwriter. A client works in: "${wsIndustry}"${wsNiche?`, specifically in the niche: "${wsNiche}"`:""}.\n\nAnalyze this space and identify:\n1. OVERSATURATED angles (what everyone is writing about — the noise)\n2. WHITE SPACE opportunities (underexplored angles that could build a distinctive brand voice)\n3. CONTRARIAN takes worth exploring\n4. EMERGING conversations that aren't crowded yet\n\nRespond in this exact JSON format with no other text:\n{\n  "oversaturated": ["angle1","angle2","angle3","angle4","angle5"],\n  "whiteSpace": [{"angle":"...","why":"..."},{"angle":"...","why":"..."},{"angle":"...","why":"..."},{"angle":"...","why":"..."}],\n  "contrarian": ["take1","take2","take3"],\n  "emerging": ["topic1","topic2","topic3"]\n}`;
+    }
     try {
       const text=await callClaude(prompt,apiKey);
       const clean=text.replace(/```json|```/g,"").trim();
@@ -1405,13 +1591,26 @@ function BrandVoiceView({ client, isAdmin, onUpdate, apiKey }) {
       {/* WHITE SPACE FINDER */}
       {tab==="whitespace"&&(
         <div>
-          <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.dim,lineHeight:1.65,marginBottom:22 }}>
-            Discover what's oversaturated in your industry and where the real opportunities for a distinctive brand voice live. Powered by AI.
+          <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.dim,lineHeight:1.65,marginBottom:18 }}>
+            Discover what's oversaturated in your space and where real opportunities for a distinctive voice live. Powered by AI.
           </div>
-          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16 }}>
-            <FormRow label="Your Industry"><input className="ks-field" value={wsIndustry} onChange={e=>setWsIndustry(e.target.value)} placeholder="e.g. Executive Leadership, Tech, Finance…"/></FormRow>
-            <FormRow label="Your Niche (optional)"><input className="ks-field" value={wsNiche} onChange={e=>setWsNiche(e.target.value)} placeholder="e.g. Women in Tech, Startup Founders…"/></FormRow>
+          {/* Mode toggle */}
+          <div style={{ display:"flex",gap:0,marginBottom:22,border:`1px solid rgba(201,168,76,0.2)`,width:"fit-content" }}>
+            {[{key:"branding",label:"Personal Branding"},{key:"book",label:"Book"}].map(m=>(
+              <button key={m.key} onClick={()=>{setWsMode(m.key);setWsResult(null);setWsError("");}} style={{ background:wsMode===m.key?"rgba(201,168,76,0.12)":"transparent",border:"none",borderRight:m.key==="branding"?`1px solid rgba(201,168,76,0.2)`:"none",color:wsMode===m.key?C.gold:C.muted,fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",padding:"9px 20px",cursor:"pointer",transition:"all 0.2s" }}>{m.label}</button>
+            ))}
           </div>
+          {wsMode==="branding"?(
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16 }}>
+              <FormRow label="Your Industry"><input className="ks-field" value={wsIndustry} onChange={e=>setWsIndustry(e.target.value)} placeholder="e.g. Executive Leadership, Tech, Finance…"/></FormRow>
+              <FormRow label="Your Niche (optional)"><input className="ks-field" value={wsNiche} onChange={e=>setWsNiche(e.target.value)} placeholder="e.g. Women in Tech, Startup Founders…"/></FormRow>
+            </div>
+          ):(
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16 }}>
+              <FormRow label="Book Category / Genre"><input className="ks-field" value={wsIndustry} onChange={e=>setWsIndustry(e.target.value)} placeholder="e.g. Business Leadership, Memoir, Self-Help…"/></FormRow>
+              <FormRow label="Your Angle / Perspective (optional)"><input className="ks-field" value={wsNiche} onChange={e=>setWsNiche(e.target.value)} placeholder="e.g. First-generation founder, Female CFO…"/></FormRow>
+            </div>
+          )}
           <button className="btn-gold" onClick={runWhiteSpace} disabled={wsLoading||!wsIndustry.trim()} style={{ marginBottom:wsError?12:wsResult?28:0 }}>
             {wsLoading?<span><span className="ai-spin"/> &nbsp;Analyzing…</span>:"Find White Space"}
           </button>
@@ -1480,12 +1679,17 @@ function BrandVoiceView({ client, isAdmin, onUpdate, apiKey }) {
 // ─────────────────────────────────────────────────────────────
 // DOCUMENTS VIEW
 // ─────────────────────────────────────────────────────────────
+const DOC_CLIENT_CATEGORIES = ["General","Drafts","Research","Brand Assets","Reference"];
+
 function DocumentsView({ client, session, onUpdate }) {
   const docs=client.documents||[];
+  const isAdmin=session.role==="admin";
   const [showLinkModal,setShowLinkModal]=useState(false);
-  const [linkForm,setLinkForm]=useState({name:"",link:"",notes:""});
+  const [linkForm,setLinkForm]=useState({name:"",link:"",notes:"",category:"General",adminOnly:false});
   const [uploading,setUploading]=useState(false);
   const [dragOverZone,setDragOverZone]=useState(false);
+  const [uploadCategory,setUploadCategory]=useState("General");
+  const [collapsedCats,setCollapsedCats]=useState({});
   const fileRef=useRef(null);
 
   const processFile=file=>{
@@ -1494,7 +1698,7 @@ function DocumentsView({ client, session, onUpdate }) {
     setUploading(true);
     const reader=new FileReader();
     reader.onload=ev=>{
-      const doc={id:uid(),name:file.name,size:Math.round(file.size/1024)+"KB",type:file.type,uploadedBy:session.username,uploadedAt:new Date().toISOString(),notes:"",data:ev.target.result};
+      const doc={id:uid(),name:file.name,size:Math.round(file.size/1024)+"KB",type:file.type,uploadedBy:session.username,uploadedAt:new Date().toISOString(),notes:"",category:isAdmin?uploadCategory:"General",adminOnly:false,data:ev.target.result};
       onUpdate({...client,documents:[...docs,doc]});
       setUploading(false);
     };
@@ -1503,27 +1707,31 @@ function DocumentsView({ client, session, onUpdate }) {
   };
 
   const handleFileInput=e=>{ processFile(e.target.files[0]); e.target.value=""; };
-
-  const handleDrop=e=>{
-    e.preventDefault(); setDragOverZone(false);
-    const file=e.dataTransfer.files[0];
-    if(file) processFile(file);
-  };
+  const handleDrop=e=>{ e.preventDefault(); setDragOverZone(false); const file=e.dataTransfer.files[0]; if(file) processFile(file); };
 
   const addLink=()=>{
     if(!linkForm.name||!linkForm.link) return;
-    const doc={id:uid(),name:linkForm.name,size:"External Link",type:"link",uploadedBy:session.username,uploadedAt:new Date().toISOString(),notes:linkForm.notes,link:linkForm.link};
+    const doc={id:uid(),name:linkForm.name,size:"External Link",type:"link",uploadedBy:session.username,uploadedAt:new Date().toISOString(),notes:linkForm.notes,link:linkForm.link,category:linkForm.category||"General",adminOnly:isAdmin&&linkForm.adminOnly};
     onUpdate({...client,documents:[...docs,doc]});
-    setLinkForm({name:"",link:"",notes:""});
+    setLinkForm({name:"",link:"",notes:"",category:"General",adminOnly:false});
     setShowLinkModal(false);
   };
 
   const deleteDoc=id=>onUpdate({...client,documents:docs.filter(d=>d.id!==id)});
   const openDoc=doc=>{ if(doc.link){window.open(doc.link,"_blank");}else{const a=document.createElement("a");a.href=doc.data;a.download=doc.name;a.click();} };
-
-  const mikaelaDocs=docs.filter(d=>d.uploadedBy==="mikaela");
-  const clientDocs=docs.filter(d=>d.uploadedBy!=="mikaela");
   const fileIcon=t=>t==="link"?"🔗":t?.startsWith("image")?"🖼":t==="application/pdf"?"📄":t?.includes("word")?"📝":"📎";
+
+  const mikaelaDocs=docs.filter(d=>d.uploadedBy==="mikaela"&&!d.adminOnly);
+  const adminOnlyDocs=docs.filter(d=>d.adminOnly);
+  const clientDocs=docs.filter(d=>d.uploadedBy!=="mikaela"&&!d.adminOnly);
+  const toggleCat=cat=>setCollapsedCats(p=>({...p,[cat]:!p[cat]}));
+
+  // Group client docs by category
+  const clientDocsByCat = DOC_CLIENT_CATEGORIES.reduce((acc,cat)=>{
+    const catDocs=clientDocs.filter(d=>(d.category||"General")===cat);
+    if(catDocs.length) acc[cat]=catDocs;
+    return acc;
+  },{});
 
   return (
     <div className="ks-up">
@@ -1534,29 +1742,81 @@ function DocumentsView({ client, session, onUpdate }) {
         onDragLeave={()=>setDragOverZone(false)}
         onDrop={handleDrop}
         onClick={()=>fileRef.current?.click()}
-        style={{ marginBottom:16 }}>
+        style={{ marginBottom:12 }}>
         <input ref={fileRef} type="file" style={{ display:"none" }} onChange={handleFileInput} disabled={uploading}/>
         <div style={{ fontSize:24,marginBottom:8,opacity:0.5 }}>⬆</div>
         <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.muted,marginBottom:4 }}>{uploading?"Uploading…":"Click to upload or drag & drop"}</div>
         <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:"rgba(255,255,255,0.3)" }}>Files up to 750KB · PDF, Word, images, text</div>
       </div>
-      <div style={{ display:"flex",justifyContent:"flex-end",marginBottom:24 }}>
+      {isAdmin&&(
+        <div style={{ display:"flex",gap:8,alignItems:"center",marginBottom:16 }}>
+          <select className="ks-field" value={uploadCategory} onChange={e=>setUploadCategory(e.target.value)} style={{ maxWidth:160 }}>
+            {DOC_CLIENT_CATEGORIES.map(c=><option key={c}>{c}</option>)}
+          </select>
+          <span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted }}>Upload category</span>
+        </div>
+      )}
+      <div style={{ display:"flex",justifyContent:"flex-end",marginBottom:24,gap:8 }}>
         <button className="btn-ghost" onClick={()=>setShowLinkModal(true)} style={{ fontSize:10 }}>+ Add External Link</button>
       </div>
+
+      {/* From Mikaela */}
       <Label>From Mikaela</Label>
       {mikaelaDocs.length===0?<div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.muted,fontStyle:"italic",marginBottom:24,padding:"10px 0" }}>No documents shared yet.</div>:(
-        <div style={{ marginBottom:24 }}>{mikaelaDocs.map(doc=><DocRow key={doc.id} doc={doc} icon={fileIcon(doc.type)} onOpen={()=>openDoc(doc)} onDelete={session.role==="admin"?()=>deleteDoc(doc.id):null}/>)}</div>
+        <div style={{ marginBottom:24 }}>{mikaelaDocs.map(doc=><DocRow key={doc.id} doc={doc} icon={fileIcon(doc.type)} onOpen={()=>openDoc(doc)} onDelete={isAdmin?()=>deleteDoc(doc.id):null}/>)}</div>
       )}
+
+      {/* Admin-only section (admin sees, client does not) */}
+      {isAdmin&&(
+        <>
+          <GoldRule/>
+          <div style={{ marginTop:20,marginBottom:12,display:"flex",alignItems:"center",gap:10 }}>
+            <Label>Admin Only</Label>
+            <span className="doc-category admin-only">Not visible to client</span>
+          </div>
+          {adminOnlyDocs.length===0?<div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.muted,fontStyle:"italic",padding:"10px 0",marginBottom:16 }}>No admin-only documents.</div>:(
+            <div style={{ marginBottom:20 }}>{adminOnlyDocs.map(doc=><DocRow key={doc.id} doc={doc} icon={fileIcon(doc.type)} onOpen={()=>openDoc(doc)} onDelete={()=>deleteDoc(doc.id)}/>)}</div>
+          )}
+        </>
+      )}
+
       <GoldRule/>
-      <div style={{ marginTop:20 }}><Label>Your Uploads</Label></div>
-      {clientDocs.length===0?<div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.muted,fontStyle:"italic",padding:"10px 0" }}>No documents uploaded yet.</div>:(
-        clientDocs.map(doc=><DocRow key={doc.id} doc={doc} icon={fileIcon(doc.type)} onOpen={()=>openDoc(doc)} onDelete={()=>deleteDoc(doc.id)}/>)
-      )}
+      {/* Client uploads, grouped by category */}
+      <div style={{ marginTop:20 }}>
+        <Label>{isAdmin?"Client Uploads":"Your Uploads"}</Label>
+        {clientDocs.length===0?<div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.muted,fontStyle:"italic",padding:"10px 0" }}>No documents uploaded yet.</div>:(
+          Object.entries(clientDocsByCat).map(([cat,catDocs])=>(
+            <div key={cat} style={{ marginBottom:12 }}>
+              <div onClick={()=>toggleCat(cat)} style={{ display:"flex",alignItems:"center",gap:8,padding:"6px 0",cursor:"pointer",borderBottom:`1px solid rgba(255,255,255,0.06)`,marginBottom:4 }}>
+                <span style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.muted }}>{cat}</span>
+                <span style={{ fontFamily:"'Lato',sans-serif",fontSize:10,color:C.muted }}>({catDocs.length})</span>
+                <span style={{ marginLeft:"auto",color:C.muted,fontSize:10,transition:"transform 0.15s",display:"inline-block",transform:collapsedCats[cat]?"rotate(-90deg)":"rotate(0deg)" }}>▾</span>
+              </div>
+              {!collapsedCats[cat]&&catDocs.map(doc=><DocRow key={doc.id} doc={doc} icon={fileIcon(doc.type)} onOpen={()=>openDoc(doc)} onDelete={()=>deleteDoc(doc.id)}/>)}
+            </div>
+          ))
+        )}
+      </div>
+
       {showLinkModal&&(
         <Modal title="Add External Link" onClose={()=>setShowLinkModal(false)}>
           <FormRow label="Document Name" hint="What should the file be called?"><input className="ks-field" value={linkForm.name} onChange={e=>setLinkForm(f=>({...f,name:e.target.value}))} placeholder="e.g. Brand Brief Q1 2024"/></FormRow>
           <FormRow label="URL" hint="Google Drive, Dropbox, Notion, or any link"><input className="ks-field" value={linkForm.link} onChange={e=>setLinkForm(f=>({...f,link:e.target.value}))} placeholder="https://…"/></FormRow>
+          <FormRow label="Category">
+            <select className="ks-field" value={linkForm.category} onChange={e=>setLinkForm(f=>({...f,category:e.target.value}))}>
+              {DOC_CLIENT_CATEGORIES.map(c=><option key={c}>{c}</option>)}
+            </select>
+          </FormRow>
           <FormRow label="Notes (optional)"><input className="ks-field" value={linkForm.notes} onChange={e=>setLinkForm(f=>({...f,notes:e.target.value}))} placeholder="Brief description…"/></FormRow>
+          {isAdmin&&(
+            <FormRow label="Visibility">
+              <div style={{ display:"flex",gap:10 }}>
+                {[{v:false,l:"Shared with client"},{v:true,l:"Admin only"}].map(opt=>(
+                  <button key={String(opt.v)} onClick={()=>setLinkForm(f=>({...f,adminOnly:opt.v}))} className={linkForm.adminOnly===opt.v?"btn-gold":"btn-ghost"} style={{ padding:"8px 14px",fontSize:10 }}>{opt.l}</button>
+                ))}
+              </div>
+            </FormRow>
+          )}
           <div style={{ display:"flex",gap:10,marginTop:8 }}>
             <button className="btn-gold" onClick={addLink} disabled={!linkForm.name||!linkForm.link}>Add Link</button>
             <button className="btn-ghost" onClick={()=>setShowLinkModal(false)}>Cancel</button>
@@ -1625,11 +1885,56 @@ function TimelineView({ client }) {
 // MANUSCRIPT
 // ─────────────────────────────────────────────────────────────
 function ManuscriptView({ client }) {
-  const total=client.chapters.length;
-  const final=client.chapters.filter(c=>c.status==="Final").length;
-  const rev=client.chapters.filter(c=>c.status==="Revision").length;
-  const draft=client.chapters.filter(c=>c.status==="Draft").length;
+  const [openRevisions, setOpenRevisions] = useState({});
+  const chapters = client.chapters || [];
+  const total=chapters.length;
+  const final=chapters.filter(c=>c.status==="Final").length;
+  const rev=chapters.filter(c=>c.status==="Revision").length;
+  const draft=chapters.filter(c=>c.status==="Draft").length;
   const pct=total>0?Math.round(((final+rev*0.7+draft*0.3)/total)*100):0;
+
+  const activeChapters = chapters.filter(c=>c.status!=="Final");
+  const finishedChapters = chapters.filter(c=>c.status==="Final");
+
+  const toggleRevisions = id => setOpenRevisions(p=>({...p,[id]:!p[id]}));
+
+  const ChapterRow = ({ch}) => {
+    const revs = ch.revisions||[];
+    return (
+      <div style={{ marginBottom:8,background:C.surface,border:`1px solid rgba(255,255,255,0.07)` }}>
+        <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 18px",gap:12 }}>
+          <div style={{ flex:1 }}>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:16,color:C.text,marginBottom:3 }}>{ch.title}</div>
+            <div style={{ display:"flex",gap:10,alignItems:"center",flexWrap:"wrap" }}>
+              <StatusBadge status={ch.status}/>
+              {ch.dueDate&&<span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted }}>Due {fmtDate(ch.dueDate)}</span>}
+              {ch.notes&&<span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.dim,fontStyle:"italic" }}>{ch.notes}</span>}
+            </div>
+          </div>
+          {revs.length>0&&(
+            <button onClick={()=>toggleRevisions(ch.id)} style={{ background:"none",border:`1px solid rgba(201,168,76,0.18)`,color:C.muted,fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",padding:"4px 9px",cursor:"pointer",transition:"all 0.2s",whiteSpace:"nowrap" }}>
+              {openRevisions[ch.id]?"Hide":"Revisions"} ({revs.length})
+            </button>
+          )}
+        </div>
+        {openRevisions[ch.id]&&revs.length>0&&(
+          <div style={{ borderTop:`1px solid rgba(255,255,255,0.05)`,padding:"10px 18px 12px" }}>
+            <div style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.muted,marginBottom:8 }}>Revision History</div>
+            {[...revs].reverse().map((rv,i)=>(
+              <div key={rv.id||i} className="ch-revision">
+                <div style={{ display:"flex",justifyContent:"space-between",marginBottom:2 }}>
+                  <span style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,color:C.gold,letterSpacing:"0.08em" }}>Rev {revs.length-i}</span>
+                  <span style={{ fontFamily:"'Lato',sans-serif",fontSize:10,color:C.muted }}>{fmtDate(rv.date)}</span>
+                </div>
+                {rv.note&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.dim,lineHeight:1.5 }}>{rv.note}</div>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="ks-up">
       <SectionHeading>Manuscript Tracker</SectionHeading>
@@ -1644,19 +1949,30 @@ function ManuscriptView({ client }) {
         <GoldRule my={28}/>
       </>}
       {client.manuscriptNotes&&<><div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:18,color:C.dim,lineHeight:1.75,marginBottom:24 }}>" {client.manuscriptNotes} "</div><GoldRule my={0}/></>}
+
+      {/* Active Chapters */}
       <div style={{ marginTop:22 }}>
         {!total?<EmptyState message="Chapter details will appear here." icon="📖"/>:(
-          <table className="ks-table">
-            <thead><tr><th>Chapter</th><th>Status</th><th>Due</th><th>Notes</th></tr></thead>
-            <tbody>{client.chapters.map(ch=>(
-              <tr key={ch.id}>
-                <td style={{ color:C.text,fontFamily:"'Cormorant Garamond',serif",fontSize:15 }}>{ch.title}</td>
-                <td><StatusBadge status={ch.status}/></td>
-                <td style={{ color:C.muted,fontSize:12,whiteSpace:"nowrap" }}>{fmtDate(ch.dueDate)}</td>
-                <td style={{ color:C.dim,fontSize:12,fontStyle:"italic",maxWidth:200 }}>{ch.notes||"—"}</td>
-              </tr>
-            ))}</tbody>
-          </table>
+          <>
+            {activeChapters.length>0&&(
+              <>
+                <Label>In Progress</Label>
+                {activeChapters.map(ch=><ChapterRow key={ch.id} ch={ch}/>)}
+              </>
+            )}
+
+            {/* Finished Manuscript section */}
+            {finishedChapters.length>0&&(
+              <div style={{ marginTop:28 }}>
+                <div style={{ display:"flex",alignItems:"center",gap:12,marginBottom:16 }}>
+                  <div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.2em",textTransform:"uppercase",color:C.gold }}>Finished Manuscript</div>
+                  <div style={{ flex:1,height:1,background:`linear-gradient(90deg,${C.gold}44,transparent)` }}/>
+                  <span style={{ fontFamily:"'Playfair Display',serif",fontSize:13,color:C.gold }}>{finishedChapters.length} chapter{finishedChapters.length!==1?"s":""}</span>
+                </div>
+                {finishedChapters.map(ch=><ChapterRow key={ch.id} ch={ch}/>)}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -2257,7 +2573,10 @@ function AdminClientEditor({ client, users, onUpdate, activeSection, onSectionCh
   // ── Report ──
   const ReportSection=()=>{
     const [form,setForm]=useState({...client.performanceReport});
+    const [outform,setOutform]=useState({...( client.outreachStats||{pitchesSent:0,responsesReceived:0,placementsSecured:0,period:"",notes:""})});
     const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+    const seto=(k,v)=>setOutform(f=>({...f,[k]:v}));
+    const influence=hasInfluence(client.tier);
     return (
       <div>
         <FormRow label="Period"><input className="ks-field" value={form.period} onChange={e=>set("period",e.target.value)} placeholder="February 2024"/></FormRow>
@@ -2268,6 +2587,19 @@ function AdminClientEditor({ client, users, onUpdate, activeSection, onSectionCh
         </div>
         <FormRow label="Summary"><textarea className="ks-field" rows={5} value={form.summary} onChange={e=>set("summary",e.target.value)}/></FormRow>
         <button className="btn-gold" onClick={()=>update({performanceReport:form})}>Save Report</button>
+        {influence&&<>
+          <GoldRule my={28}/>
+          <Label>Outreach Stats (Influence Tier)</Label>
+          <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,marginBottom:16,fontStyle:"italic" }}>Visible to client in Performance view.</div>
+          <FormRow label="Period"><input className="ks-field" value={outform.period} onChange={e=>seto("period",e.target.value)} placeholder="Q1 2026"/></FormRow>
+          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12 }}>
+            <FormRow label="Pitches Sent"><input className="ks-field" type="number" value={outform.pitchesSent} onChange={e=>seto("pitchesSent",Number(e.target.value))}/></FormRow>
+            <FormRow label="Responses"><input className="ks-field" type="number" value={outform.responsesReceived} onChange={e=>seto("responsesReceived",Number(e.target.value))}/></FormRow>
+            <FormRow label="Placements Secured"><input className="ks-field" type="number" value={outform.placementsSecured} onChange={e=>seto("placementsSecured",Number(e.target.value))}/></FormRow>
+          </div>
+          <FormRow label="Notes (optional)"><input className="ks-field" value={outform.notes} onChange={e=>seto("notes",e.target.value)} placeholder="Context for client…"/></FormRow>
+          <button className="btn-gold" onClick={()=>update({outreachStats:outform})}>Save Outreach Stats</button>
+        </>}
       </div>
     );
   };
@@ -2579,7 +2911,7 @@ function AdminClientEditor({ client, users, onUpdate, activeSection, onSectionCh
   // ── Coaching (admin) ──
   const CoachingSection=()=><BookCoachingView client={client} isAdmin={true} session={{ username:"mikaela",role:"admin" }} onUpdate={onUpdate}/>;
 
-  const sections={ content:<ContentSection/>,calendar:<CalendarSection/>,report:<ReportSection/>,linkedin:<LinkedInSection/>,publications:<PubsSection/>,milestones:<MilestonesSection/>,strategy:<StrategySection/>,ai:<AISection/>,manuscript:<ManuscriptSection/>,pipeline:<PipelineSection/>,coaching:<CoachingSection/>,timeline:<TimelineSection/>,voice:<BrandVoiceView client={client} isAdmin={true} onUpdate={onUpdate} apiKey={apiKey}/>,documents:<DocumentsView client={client} session={{ username:"mikaela",role:"admin" }} onUpdate={onUpdate}/>,messages:<MessagesSection/>,playbook:<PlaybookSection/>,welcome:<WelcomeSection/>,notes:<AdminNotesSection/>,settings:<SettingsSection/> };
+  const sections={ content:<ContentSection/>,calendar:<CalendarSection/>,report:<ReportSection/>,linkedin:<LinkedInSection/>,publications:<PubsSection/>,milestones:<MilestonesSection/>,strategy:<StrategySection/>,ai:<AISection/>,manuscript:<ManuscriptSection/>,pipeline:<PipelineSection/>,coaching:<CoachingSection/>,timeline:<TimelineSection/>,voice:<BrandVoiceView client={client} isAdmin={true} onUpdate={onUpdate} apiKey={apiKey}/>,documents:<DocumentsView client={client} session={{ username:"mikaela",role:"admin" }} onUpdate={onUpdate}/>,messages:<MessagesSection/>,playbook:<PlaybookSection/>,welcome:<WelcomeSection/>,notes:<AdminNotesSection/>,settings:<SettingsSection/>,milestonesAdmin:<MilestonesView client={client} isAdmin={true} onUpdate={onUpdate}/> };
 
   return (
     <div className="ks-in" style={{ padding:"44px 52px",maxWidth:880 }}>
@@ -2636,7 +2968,7 @@ function ClientDashboard({ client, session, onLogout, onUpdate, apiKey }) {
     ...(branding?[{ label:"Content",items:[
       { key:"content",label:"Content",icon:"◈",active:view==="content",onClick:()=>setView("content"),badge:pendingApprovals||null },
       { key:"performance",label:"Performance",active:view==="performance",onClick:()=>setView("performance") },
-      { key:"publications",label:"Publication Wins",active:view==="publications",onClick:()=>setView("publications") },
+      { key:"publications",label:"In the Press",active:view==="publications",onClick:()=>setView("publications") },
     ]}]:[]),
     ...(authority?[{ label:"Brand",items:[
       { key:"milestones",label:"Milestones",active:view==="milestones",onClick:()=>setView("milestones") },
@@ -2652,7 +2984,6 @@ function ClientDashboard({ client, session, onLogout, onUpdate, apiKey }) {
     ]}]:[]),
     { label:"Your Space",items:[
       { key:"voice",label:"Brand Voice",icon:"◇",active:view==="voice",onClick:()=>setView("voice"),badge:unansweredIdeas||null },
-      { key:"playbook",label:"Media Playbook",active:view==="playbook",onClick:()=>setView("playbook") },
       { key:"timeline",label:"Results Timeline",active:view==="timeline",onClick:()=>setView("timeline") },
       { key:"documents",label:"Documents",active:view==="documents",onClick:()=>setView("documents") },
     ]},
@@ -2669,15 +3000,15 @@ function ClientDashboard({ client, session, onLogout, onUpdate, apiKey }) {
       case "calendar": return <CalendarView {...p}/>;
       case "content": return <ContentView {...p}/>;
       case "performance": return <PerformanceView client={client}/>;
-      case "publications": return <PublicationWinsView client={client}/>;
-      case "milestones": return <MilestonesView client={client}/>;
+      case "publications": return <InThePressView client={client}/>;
+      case "milestones": return <MilestonesView client={client} isAdmin={false} onUpdate={onUpdate}/>;
       case "strategy": return <StrategyMapView client={client}/>;
       case "ai": return <AIVisibilityView client={client}/>;
       case "manuscript": return <ManuscriptView client={client}/>;
       case "pipeline": return <BookPipelineView client={client} isAdmin={false} onUpdate={onUpdate}/>;
       case "coaching": return <BookCoachingView client={client} isAdmin={false} session={session} onUpdate={onUpdate}/>;
       case "voice": return <BrandVoiceView {...p}/>;
-      case "playbook": return <MediaPlaybookView client={client}/>;
+      case "playbook": return <PressGuidanceView client={client}/>;
       case "timeline": return <TimelineView client={client}/>;
       case "documents": return <DocumentsView {...p}/>;
       case "preferences": return <ClientSettingsView client={client} session={session} onUpdate={onUpdate}/>;
@@ -2705,6 +3036,7 @@ function AdminDashboard({ clients, users, onUpdateClient, onAddClient, onLogout 
   const [showAddClient,setShowAddClient]=useState(false);
   const [apiKey,setApiKey]=useState(()=>{ try{ return localStorage.getItem("ks-api-key")||""; }catch{return "";} });
   const [showApiKey,setShowApiKey]=useState(false);
+  const [rosterCollapsed,setRosterCollapsed]=useState({});
   const selected=clients.find(c=>c.id===selectedId);
   const [saved,setSaved]=useState(false);
 
@@ -2729,10 +3061,10 @@ function AdminDashboard({ clients, users, onUpdateClient, onAddClient, onLogout 
       ...(!m?[{ label:"Reports",items:[
         { key:"report",label:"Performance Report",active:activeSection==="report",onClick:()=>setActiveSection("report") },
         ...(b?[{ key:"linkedin",label:"LinkedIn Stats",active:activeSection==="linkedin",onClick:()=>setActiveSection("linkedin") }]:[]),
-        { key:"publications",label:"Publications",active:activeSection==="publications",onClick:()=>setActiveSection("publications") },
+        { key:"publications",label:"In the Press",active:activeSection==="publications",onClick:()=>setActiveSection("publications") },
       ]}]:[]),
       ...(a?[{ label:"Brand",items:[
-        { key:"milestones",label:"Milestones",active:activeSection==="milestones",onClick:()=>setActiveSection("milestones") },
+        { key:"milestonesAdmin",label:"Milestones",active:activeSection==="milestonesAdmin",onClick:()=>setActiveSection("milestonesAdmin") },
         { key:"strategy",label:"Strategy Map",active:activeSection==="strategy",onClick:()=>setActiveSection("strategy") },
         ...(inf?[{ key:"ai",label:"AI Visibility",active:activeSection==="ai",onClick:()=>setActiveSection("ai") }]:[]),
       ]}]:[]),
@@ -2743,7 +3075,7 @@ function AdminDashboard({ clients, users, onUpdateClient, onAddClient, onLogout 
       ]}]:[]),
       { label:"Resources",items:[
         { key:"voice",label:"Brand Voice",active:activeSection==="voice",onClick:()=>setActiveSection("voice") },
-        { key:"playbook",label:"Media Playbook",active:activeSection==="playbook",onClick:()=>setActiveSection("playbook") },
+        { key:"playbook",label:"Press Guidance",active:activeSection==="playbook",onClick:()=>setActiveSection("playbook") },
         { key:"timeline",label:"Timeline",active:activeSection==="timeline",onClick:()=>setActiveSection("timeline") },
         { key:"documents",label:"Documents",active:activeSection==="documents",onClick:()=>setActiveSection("documents") },
       ]},
@@ -2809,22 +3141,42 @@ function AdminDashboard({ clients, users, onUpdateClient, onAddClient, onLogout 
                   <button className="btn-gold" onClick={()=>setShowAddClient(true)}>+ New Client</button>
                 </div>
                 <GoldRule my={0}/>
-                {clients.map(c=>{
-                  const pending=c.contentCalendar.filter(i=>i.approvalStatus==="Pending Approval").length;
+                {/* Grouped roster */}
+                {[
+                  { label:"Personal Branding", filter:(c)=>isBranding(c.tier) },
+                  { label:"Manuscript & Coaching", filter:(c)=>isManuscript(c.tier) },
+                ].map(group=>{
+                  const groupClients=clients.filter(group.filter);
+                  if(!groupClients.length) return null;
+                  const isCollapsed=rosterCollapsed[group.label];
                   return (
-                    <div key={c.id} onClick={()=>{ setSelectedId(c.id); setActiveSection("content"); setShowApiKey(false); }}
-                      style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"20px 0",borderBottom:`1px solid rgba(255,255,255,0.05)`,cursor:"pointer",transition:"padding 0.2s" }}
-                      onMouseEnter={e=>e.currentTarget.style.paddingLeft="8px"}
-                      onMouseLeave={e=>e.currentTarget.style.paddingLeft="0"}>
-                      <div>
-                        <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:21,color:C.white,fontWeight:400 }}>{c.name}</div>
-                        <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,marginTop:3 }}>@{c.username} · Since {fmtDate(c.joinDate)}</div>
+                    <div key={group.label} style={{ marginBottom:24 }}>
+                      <div className="roster-group-header" onClick={()=>setRosterCollapsed(p=>({...p,[group.label]:!p[group.label]}))}>
+                        <div style={{ display:"flex",alignItems:"center",gap:10 }}>
+                          <span className="roster-group-label" style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.16em",textTransform:"uppercase",color:"rgba(255,255,255,0.55)",transition:"color 0.15s" }}>{group.label}</span>
+                          <span style={{ fontFamily:"'Lato',sans-serif",fontSize:10,color:C.muted }}>({groupClients.length})</span>
+                        </div>
+                        <span style={{ color:C.muted,fontSize:11,transition:"transform 0.18s",display:"inline-block",transform:isCollapsed?"rotate(-90deg)":"rotate(0deg)" }}>▾</span>
                       </div>
-                      <div style={{ display:"flex",alignItems:"center",gap:12 }}>
-                        {pending>0&&<span style={{ background:"rgba(201,168,76,0.15)",color:C.gold,fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,padding:"3px 10px",letterSpacing:"0.08em" }}>{pending} pending</span>}
-                        <TierChip tier={c.tier}/>
-                        <span style={{ color:C.muted,fontSize:16 }}>›</span>
-                      </div>
+                      {!isCollapsed&&groupClients.map(c=>{
+                        const pending=c.contentCalendar.filter(i=>i.approvalStatus==="Pending Approval").length;
+                        return (
+                          <div key={c.id} onClick={()=>{ setSelectedId(c.id); setActiveSection("content"); setShowApiKey(false); }}
+                            style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"18px 0",borderBottom:`1px solid rgba(255,255,255,0.04)`,cursor:"pointer",transition:"padding 0.2s" }}
+                            onMouseEnter={e=>e.currentTarget.style.paddingLeft="8px"}
+                            onMouseLeave={e=>e.currentTarget.style.paddingLeft="0"}>
+                            <div>
+                              <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:20,color:C.white,fontWeight:400 }}>{c.name}</div>
+                              <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,marginTop:2 }}>@{c.username} · Since {fmtDate(c.joinDate)}</div>
+                            </div>
+                            <div style={{ display:"flex",alignItems:"center",gap:12 }}>
+                              {pending>0&&<span style={{ background:"rgba(201,168,76,0.15)",color:C.gold,fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,padding:"3px 10px",letterSpacing:"0.08em" }}>{pending} pending</span>}
+                              <TierChip tier={c.tier}/>
+                              <span style={{ color:C.muted,fontSize:16 }}>›</span>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   );
                 })}
