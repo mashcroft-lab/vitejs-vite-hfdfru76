@@ -248,6 +248,7 @@ const mkClient = o => ({
   writingAssignments:[],
   outreachStats:{ pitchesSent:0, responsesReceived:0, placementsSecured:0, period:"", notes:"" },
   preferences:{ contactMethod:"messages", timezone:"", displayName:"" },
+  clusters:[],
   ...o,
 });
 
@@ -330,6 +331,26 @@ const DEFAULT_CLIENTS = [
       { id:"mp3",title:"What to say if someone asks who writes your content",content:"The honest and professional answer: 'I work with a strategic writing partner who helps me articulate my thinking.' You've lived every idea in every piece. The collaboration is real. You are never misrepresenting yourself." },
       { id:"mp4",title:"TV, broadcast media, and major publishing negotiations",content:"Major media appearances and publisher negotiations are handled through Kepler Script's partner network — specialists who operate at that level every day.\n\nIf any of these opportunities arise, come to me first. I will connect you with the right people and make sure you walk in fully prepared. You will never be navigating that alone." },
     ]},
+    clusters:[
+      { id:"cl1",title:"The Quiet Power of Listening Leaders",status:"complete",reach:42000,
+        article:    { label:"HBR Article",       status:"published",reach:8200, preview:"Why the most effective executives I've studied share one counterintuitive trait: they speak less than you'd expect." },
+        newsletter: { label:"Newsletter #3",      status:"published",reach:6800, preview:"This week: what two decades of observing boardroom dynamics taught me about the leaders who actually change things." },
+        posts:[ { label:"LinkedIn · Story",    status:"published",reach:14200,preview:"The CEO who changed my career didn't give a rousing speech. She asked me one question and then sat in complete silence for 45 seconds." },
+                { label:"LinkedIn · Insight",  status:"published",reach:9400, preview:"3 communication habits of leaders who never seem to lose the room. The list will surprise you." },
+                { label:"LinkedIn · Hot Take",  status:"published",reach:8200, preview:"Hot take: the most powerful thing a leader can do in a meeting is nothing. Here's the data." }]},
+      { id:"cl2",title:"Why Most Executives Fail at Thought Leadership",status:"active",reach:14200,
+        article:    { label:"Forbes Article",     status:"published",reach:5400, preview:"After working with dozens of executives on their public voice, I've identified the exact moment most of them give up — and why it's the wrong call." },
+        newsletter: { label:"Newsletter #6",      status:"in-review",reach:null, preview:"Most executives approach thought leadership like a marketing campaign. It isn't. And that misunderstanding is costing them credibility they can't get back." },
+        posts:[ { label:"LinkedIn · Story",    status:"published",reach:8800, preview:"I told a client their first draft was too safe. They pushed back. Six months later they thanked me." },
+                { label:"LinkedIn · Insight",  status:"in-review",reach:null,  preview:null },
+                { label:"LinkedIn · Hot Take",  status:"upcoming",  reach:null,  preview:null }]},
+      { id:"cl3",title:"Strategic Communication as a Leadership Tool",status:"upcoming",reach:0,
+        article:    { label:"Inc. Article",       status:"upcoming",reach:null,preview:null },
+        newsletter: { label:"Newsletter #9",      status:"upcoming",reach:null,preview:null },
+        posts:[ { label:"LinkedIn · Story",    status:"upcoming",reach:null,preview:null },
+                { label:"LinkedIn · Insight",  status:"upcoming",reach:null,preview:null },
+                { label:"LinkedIn · Hot Take",  status:"upcoming",reach:null,preview:null }]},
+    ],
   }),
   mkClient({ id:"c2", name:"James Walker", username:"james.walker", tier:"authority", joinDate:"2026-02-01",
     contentCalendar:[
@@ -353,6 +374,20 @@ const DEFAULT_CLIENTS = [
       { id:"mp1",title:"If a journalist contacts you",content:"Send me the email before replying. I'll advise on whether to engage and how to position the conversation. Never agree to an interview without looping me in first." },
       { id:"mp2",title:"Publishing, TV, and major media",content:"Large-scale media and publisher conversations go through Kepler Script's partner network. Come to me first — I'll make sure the right people are involved and that you're fully prepared before any significant conversation." },
     ]},
+    clusters:[
+      { id:"cl1",title:"The Founder's Guide to Delegation",status:"active",reach:18000,
+        article:    { label:"Inc. Article",       status:"published",reach:4200, preview:"The mistake every founder makes: thinking delegation is about handing off tasks. It isn't. Here's what it's actually about." },
+        newsletter: { label:"Newsletter #1",      status:"published",reach:2800, preview:"This week I want to talk about the thing that almost broke my company — and the decision that saved it." },
+        posts:[ { label:"LinkedIn · Story",    status:"published",reach:8800, preview:"I hired a COO because I was overwhelmed. Six months later I almost fired myself. Here's what I learned." },
+                { label:"LinkedIn · Insight",  status:"in-review",reach:null,  preview:"The 3 levels of delegation — and why most founders are stuck at level 1." },
+                { label:"LinkedIn · Hot Take",  status:"upcoming",reach:null,  preview:null }]},
+      { id:"cl2",title:"Building Culture in a Remote-First World",status:"upcoming",reach:0,
+        article:    { label:"Fast Company Article",status:"upcoming",reach:null,preview:null },
+        newsletter: { label:"Newsletter #3",       status:"upcoming",reach:null,preview:null },
+        posts:[ { label:"LinkedIn · Story",    status:"upcoming",reach:null,preview:null },
+                { label:"LinkedIn · Insight",  status:"upcoming",reach:null,preview:null },
+                { label:"LinkedIn · Hot Take",  status:"upcoming",reach:null,preview:null }]},
+    ],
   }),
   mkClient({ id:"c3", name:"Elena Russo", username:"elena.russo", tier:"foundation", joinDate:"2026-02-15",
     contentCalendar:[{ id:"cc1",title:"Five Lessons from 20 Years in Hospitality",type:"LinkedIn Article",status:"In Review",approvalStatus:"Pending Approval",revisionNotes:"",scheduledDate:"2026-03-10",link:"" }],
@@ -3717,6 +3752,617 @@ function AdminClientEditor({ client, users, onUpdate, activeSection, onSectionCh
 }
 
 // ─────────────────────────────────────────────────────────────
+// BRANDING CLIENT PORTAL — HOOKS & SHARED COMPONENTS
+// ─────────────────────────────────────────────────────────────
+function useCountUp(target, duration=2000, delay=0) {
+  const [val,setVal]=useState(0);
+  useEffect(()=>{
+    let raf,start=null;
+    const t=setTimeout(()=>{
+      const step=ts=>{ if(!start) start=ts; const p=Math.min((ts-start)/duration,1); setVal(Math.floor((1-Math.pow(1-p,3))*target)); if(p<1) raf=requestAnimationFrame(step); };
+      raf=requestAnimationFrame(step);
+    },delay);
+    return ()=>{ clearTimeout(t); cancelAnimationFrame(raf); };
+  },[target,duration,delay]);
+  return val;
+}
+
+function useStagger(count,baseDelay=100,step=80) {
+  const [visible,setVisible]=useState([]);
+  useEffect(()=>{
+    const timers=Array.from({length:count},(_,i)=>setTimeout(()=>setVisible(v=>[...v,i]),baseDelay+i*step));
+    return ()=>timers.forEach(clearTimeout);
+  },[count,baseDelay,step]);
+  return i=>visible.includes(i);
+}
+
+function PbStatusDot({ status, size=7, animate=false }) {
+  const col={ published:C.gold,"in-review":"rgba(201,168,76,0.45)",upcoming:"rgba(255,255,255,0.12)",scheduled:"#6db58a",complete:C.gold,active:C.goldL,"Complete":C.gold,"In Progress":"#6db58a","Not Started":"rgba(255,255,255,0.15)" }[status]||"rgba(255,255,255,0.15)";
+  return <div style={{ width:size,height:size,borderRadius:"50%",background:col,flexShrink:0,boxShadow:(status==="published"||status==="complete"||status==="Complete")?`0 0 8px ${col}`:"none",animation:(animate&&(status==="active"||status==="In Progress"))?"pulse 2.2s ease-in-out infinite":"none" }}/>;
+}
+
+function PbPlatformDot({ type, size=7 }) {
+  const col={ linkedin:C.gold,newsletter:"#9a7fd4",article:"#6db58a",meeting:"rgba(255,255,255,0.35)" }[type]||C.muted;
+  return <div style={{ width:size,height:size,borderRadius:"50%",background:col,flexShrink:0 }}/>;
+}
+
+function PbGoldRule({ opacity=0.12, my=0 }) {
+  return <div style={{ height:1,background:`linear-gradient(90deg,transparent,rgba(201,168,76,${opacity}),transparent)`,margin:`${my}px 0` }}/>;
+}
+
+function OrbitalDiagram({ cluster, size=300, onNodeClick }) {
+  const cx=size/2,cy=size/2;
+  const radii=[size*0.155,size*0.27,size*0.39];
+  const postAngles=[-150,-30,150];
+  const sc=s=>s==="published"?C.gold:s==="in-review"?"rgba(201,168,76,0.42)":s==="scheduled"?"#6db58a":"rgba(255,255,255,0.1)";
+  const glow=s=>s==="published"?`drop-shadow(0 0 8px rgba(201,168,76,0.55))`:"none";
+  const nx=(r,a)=>cx+r*Math.cos((a*Math.PI)/180);
+  const ny=(r,a)=>cy+r*Math.sin((a*Math.PI)/180);
+  const nodes=[
+    { item:cluster.article,  r:radii[1], a:-90, label:"Article",   key:"article" },
+    { item:cluster.newsletter,r:radii[1],a:90,  label:"Newsletter", key:"newsletter" },
+    ...(cluster.posts||[]).map((p,i)=>({ item:p,r:radii[2],a:postAngles[i],label:["Story","Insight","Hot Take"][i],key:`post${i}` })),
+  ];
+  return (
+    <div style={{ position:"relative",width:size,height:size,flexShrink:0 }}>
+      <svg width={size} height={size} style={{ position:"absolute",inset:0 }}>
+        {radii.map((r,i)=><circle key={i} cx={cx} cy={cy} r={r} fill="none" stroke="rgba(201,168,76,0.07)" strokeWidth="1" strokeDasharray={i===0?"2,6":"3,8"}/>)}
+        {nodes.map((n,i)=><line key={i} x1={cx} y1={cy} x2={nx(n.r,n.a)*0.72+cx*0.28} y2={ny(n.r,n.a)*0.72+cy*0.28} stroke="rgba(201,168,76,0.07)" strokeWidth="1"/>)}
+        <circle cx={cx} cy={cy} r={radii[0]} fill={C.surface2} stroke="rgba(201,168,76,0.22)" strokeWidth="1"/>
+        <circle cx={cx} cy={cy} r={size*0.04} fill={C.gold} style={{ filter:"drop-shadow(0 0 10px rgba(201,168,76,0.8))" }}/>
+        {nodes.map((n,i)=>{
+          const x=nx(n.r,n.a),y=ny(n.r,n.a),col=sc(n.item?.status);
+          return (
+            <g key={i} onClick={()=>onNodeClick&&n.item?.preview&&onNodeClick(n)} style={{ cursor:n.item?.preview?"pointer":"default" }}>
+              <circle cx={x} cy={y} r={size*0.056} fill={C.surface} stroke={col} strokeWidth="1.5" style={{ filter:glow(n.item?.status) }}/>
+              <circle cx={x} cy={y} r={size*0.023} fill={col} style={{ animation:n.item?.status==="in-review"?"pulse 2s ease-in-out infinite":"none" }}/>
+            </g>
+          );
+        })}
+      </svg>
+      <div style={{ position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none" }}>
+        <div style={{ textAlign:"center",width:size*0.25 }}>
+          {cluster.reach>0&&<><div style={{ fontFamily:"'Playfair Display',serif",fontSize:size*0.09,fontWeight:700,color:C.goldL,lineHeight:1 }}>{cluster.reach>=1000?`${(cluster.reach/1000).toFixed(1)}K`:cluster.reach}</div><div style={{ fontFamily:"'Lato',sans-serif",fontSize:size*0.035,color:C.muted,letterSpacing:"0.1em",textTransform:"uppercase",marginTop:3 }}>reached</div></>}
+          {cluster.status==="upcoming"&&<div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:size*0.055,color:"rgba(255,255,255,0.18)" }}>Coming<br/>Soon</div>}
+        </div>
+      </div>
+      {nodes.map((n,i)=>{
+        const x=nx(n.r,n.a),y=ny(n.r,n.a),above=n.a<0;
+        return <div key={i} style={{ position:"absolute",left:x,top:y+(above?-(size*0.1):(size*0.075)),transform:"translateX(-50%)",fontFamily:"'Lato',sans-serif",fontSize:9,letterSpacing:"0.1em",textTransform:"uppercase",color:n.item?.status==="published"?C.gold:"rgba(255,255,255,0.22)",whiteSpace:"nowrap",pointerEvents:"none",textAlign:"center" }}>{n.label}</div>;
+      })}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// BRANDING CLIENT: HOME SECTION
+// ─────────────────────────────────────────────────────────────
+function BrandingHomeSection({ client, session, onUpdate, newSince, onNavigate }) {
+  const isVis=useStagger(4,120,150);
+  const sm=client.strategyMap||{};
+  const pr=client.performanceReport||{};
+  const totalReach=parseInt((pr.reach||"0").replace(/[^0-9]/g,""))||0;
+  const thisMonthReach=parseInt((pr.engagement||"0").replace(/[^0-9]/g,""))||0;
+  const reachDisplay=totalReach||thisMonthReach;
+  const reachCount=useCountUp(reachDisplay,2200,700);
+
+  // Pending approvals from real data
+  const pending=client.contentCalendar.filter(i=>i.approvalStatus==="Pending Approval");
+  const unread=(client.directMessages||[]).filter(m=>m.from==="mikaela").length;
+  const recentWins=[...client.publicationLog].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,3);
+  const nextMilestone=(client.milestones||[]).find(m=>m.status==="In Progress")||(client.milestones||[]).find(m=>m.status==="Not Started");
+
+  const now=new Date();
+  const thisMonthPublished=client.contentCalendar.filter(i=>i.status==="Published"&&i.scheduledDate&&new Date(i.scheduledDate).getMonth()===now.getMonth()&&new Date(i.scheduledDate).getFullYear()===now.getFullYear()).length;
+
+  const updateItem=(id,patch)=>onUpdate({...client,contentCalendar:client.contentCalendar.map(i=>i.id===id?{...i,...patch}:i)});
+  const [revModal,setRevModal]=useState(null);
+  const [revNote,setRevNote]=useState("");
+
+  return (
+    <div className="ks-up" style={{ paddingBottom:40 }}>
+      {/* Hero */}
+      <div style={{ marginBottom:48,paddingBottom:40,borderBottom:`1px solid rgba(201,168,76,0.08)`,position:"relative",overflow:"hidden" }}>
+        <div style={{ position:"absolute",top:-80,right:-40,width:480,height:480,borderRadius:"50%",background:"radial-gradient(circle,rgba(201,168,76,0.04) 0%,transparent 65%)",pointerEvents:"none" }}/>
+        <div style={{ opacity:isVis(0)?1:0,transform:isVis(0)?"none":"translateY(14px)",transition:"all 0.65s cubic-bezier(0.16,1,0.3,1)" }}>
+          {client.welcomeMessage&&(
+            <div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontWeight:300,fontSize:22,color:C.dim,lineHeight:1.85,marginBottom:28,maxWidth:560 }}>
+              {client.welcomeMessage}
+              <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.2em",textTransform:"uppercase",color:C.gold,marginTop:12 }}>— Mikaela</div>
+            </div>
+          )}
+          <div style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.38em",textTransform:"uppercase",color:C.muted,marginBottom:14 }}>Kepler Script · {client.tier ? client.tier.charAt(0).toUpperCase()+client.tier.slice(1) : "Branding"}</div>
+          <h1 style={{ fontFamily:"'Cormorant Garamond',serif",fontWeight:300,fontSize:54,color:C.white,lineHeight:1,letterSpacing:"0.02em",marginBottom:20 }}>
+            {client.name.split(" ")[0]}<br/>
+            <span style={{ color:C.gold,fontStyle:"italic" }}>{client.name.split(" ").slice(1).join(" ")}</span>
+          </h1>
+          {sm.northStar&&<div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:16,color:C.dim,maxWidth:500,lineHeight:1.75,marginBottom:32 }}>"{sm.northStar}"</div>}
+          {/* Reach stats */}
+          {reachDisplay>0&&(
+            <div style={{ display:"flex",gap:40,marginTop:8 }}>
+              <div>
+                <div style={{ fontFamily:"'Playfair Display',serif",fontSize:38,fontWeight:700,color:C.gold,lineHeight:1 }}>{reachCount.toLocaleString()}</div>
+                <div style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.2em",textTransform:"uppercase",color:C.muted,marginTop:5 }}>{pr.period||"Total"} Reach</div>
+              </div>
+              {thisMonthPublished>0&&<>
+                <div style={{ width:1,background:"rgba(201,168,76,0.12)",alignSelf:"stretch" }}/>
+                <div>
+                  <div style={{ fontFamily:"'Playfair Display',serif",fontSize:38,fontWeight:700,color:C.goldL,lineHeight:1 }}>{thisMonthPublished}</div>
+                  <div style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.2em",textTransform:"uppercase",color:C.muted,marginTop:5 }}>Published This Month</div>
+                </div>
+              </>}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Action items — approvals + messages */}
+      {(pending.length>0||unread>0)&&(
+        <div style={{ marginBottom:40,opacity:isVis(1)?1:0,transform:isVis(1)?"none":"translateY(12px)",transition:"all 0.65s cubic-bezier(0.16,1,0.3,1) 0.15s" }}>
+          <div style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.25em",textTransform:"uppercase",color:C.muted,marginBottom:18,display:"flex",alignItems:"center",gap:12 }}>
+            Needs Your Attention
+            <span style={{ background:"rgba(201,168,76,0.15)",border:"1px solid rgba(201,168,76,0.3)",fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,color:C.gold,padding:"1px 8px",borderRadius:10 }}>{pending.length+unread}</span>
+          </div>
+          {/* Messages banner */}
+          {unread>0&&(
+            <div onClick={()=>onNavigate("messages")} style={{ display:"flex",alignItems:"center",gap:14,padding:"18px 22px",background:"rgba(109,181,138,0.06)",border:"1px solid rgba(109,181,138,0.25)",cursor:"pointer",marginBottom:10,transition:"border-color 0.2s" }}
+              onMouseEnter={e=>e.currentTarget.style.borderColor="rgba(109,181,138,0.5)"}
+              onMouseLeave={e=>e.currentTarget.style.borderColor="rgba(109,181,138,0.25)"}>
+              <span style={{ fontFamily:"'Playfair Display',serif",fontSize:32,color:"#6db58a",lineHeight:1 }}>{unread}</span>
+              <div>
+                <div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:"#6db58a" }}>New message{unread>1?"s":""} from Mikaela</div>
+                <div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted,marginTop:3 }}>Open messages →</div>
+              </div>
+            </div>
+          )}
+          {/* Pending approvals */}
+          {pending.slice(0,3).map((item,i)=>{
+            const [rev,setRev]=useState(false);
+            const [note,setNote]=useState("");
+            return (
+              <div key={item.id} style={{ padding:"18px 22px",background:C.surface,border:"1px solid rgba(201,168,76,0.18)",marginBottom:8,animation:"fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both",animationDelay:`${i*70}ms` }}>
+                {rev?(
+                  <div>
+                    <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:17,color:C.white,marginBottom:12 }}>{item.title}</div>
+                    <div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted,marginBottom:12 }}>What would you change? Leave a note for Mikaela.</div>
+                    <textarea className="ks-field" rows={3} value={note} onChange={e=>setNote(e.target.value)} placeholder="Your thoughts on this piece…" style={{ marginBottom:10 }}/>
+                    <div style={{ display:"flex",gap:8 }}><button className="btn-revise" onClick={()=>{updateItem(item.id,{approvalStatus:"Revision Requested",revisionNotes:note});setRev(false);}}>Send Revision Note</button><button className="btn-ghost" onClick={()=>setRev(false)} style={{ padding:"6px 14px",fontSize:10 }}>Cancel</button></div>
+                  </div>
+                ):(
+                  <div style={{ display:"flex",gap:16,alignItems:"flex-start" }}>
+                    <div style={{ flex:1 }}>
+                      <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:8 }}>
+                        <PbPlatformDot type={item.type?.toLowerCase().includes("linkedin")?"linkedin":item.type?.toLowerCase().includes("newsletter")?"newsletter":"article"} size={6}/>
+                        <span style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.muted }}>{item.type}</span>
+                        {item.scheduledDate&&<span style={{ fontFamily:"'Lato',sans-serif",fontSize:10,color:C.muted,marginLeft:"auto" }}>Due {fmtDate(item.scheduledDate)}</span>}
+                      </div>
+                      <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:19,color:C.white,lineHeight:1.3,marginBottom:item.body?8:0 }}>{item.title}</div>
+                      {item.body&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:"rgba(255,255,255,0.38)",lineHeight:1.6 }}>{item.body.slice(0,180)}{item.body.length>180?"…":""}</div>}
+                    </div>
+                    <div style={{ display:"flex",flexDirection:"column",gap:6,flexShrink:0,paddingTop:4 }}>
+                      <button className="btn-approve" onClick={()=>updateItem(item.id,{approvalStatus:"Approved",revisionNotes:""})}>Approve</button>
+                      <button className="btn-revise" onClick={()=>setRev(true)}>Revise</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {pending.length>3&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted,fontStyle:"italic",marginTop:6 }}>+{pending.length-3} more — <button onClick={()=>onNavigate("content")} style={{ background:"none",border:"none",color:C.gold,cursor:"pointer",fontFamily:"'Lato',sans-serif",fontSize:12,padding:0 }}>view all →</button></div>}
+        </div>
+      )}
+
+      {/* What's Next milestone */}
+      {nextMilestone&&(
+        <div style={{ marginBottom:40,opacity:isVis(2)?1:0,transform:isVis(2)?"none":"translateY(12px)",transition:"all 0.65s cubic-bezier(0.16,1,0.3,1) 0.28s" }}>
+          <div style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.25em",textTransform:"uppercase",color:C.muted,marginBottom:14 }}>What's Next</div>
+          <div onClick={()=>onNavigate("journey")} style={{ padding:"18px 22px",background:C.surface,border:`1px solid ${C.goldBorder}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,transition:"border-color 0.2s" }}
+            onMouseEnter={e=>e.currentTarget.style.borderColor=C.gold}
+            onMouseLeave={e=>e.currentTarget.style.borderColor=C.goldBorder}>
+            <div style={{ display:"flex",alignItems:"center",gap:12 }}>
+              <PbStatusDot status={nextMilestone.status} size={8} animate/>
+              <div>
+                <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:20,color:C.text }}>{nextMilestone.name}</div>
+                {nextMilestone.completionDate&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted,marginTop:3 }}>Target: {fmtDate(nextMilestone.completionDate)}</div>}
+              </div>
+            </div>
+            <span style={{ color:C.gold,fontSize:18 }}>→</span>
+          </div>
+        </div>
+      )}
+
+      {/* Recent publication wins */}
+      {recentWins.length>0&&(
+        <div style={{ opacity:isVis(3)?1:0,transform:isVis(3)?"none":"translateY(12px)",transition:"all 0.65s cubic-bezier(0.16,1,0.3,1) 0.42s" }}>
+          <div style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.25em",textTransform:"uppercase",color:C.muted,marginBottom:18 }}>Recent Wins</div>
+          {recentWins.map((p,i)=>(
+            <div key={p.id} style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 0",borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+              <div style={{ display:"flex",alignItems:"center",gap:12 }}>
+                <div style={{ fontFamily:"'Playfair Display',serif",fontSize:20,color:"rgba(201,168,76,0.25)",fontWeight:700,width:24,textAlign:"right",flexShrink:0 }}>{i+1}</div>
+                <div>
+                  <span style={{ fontFamily:"'Lato',sans-serif",fontSize:13,fontWeight:700,color:C.gold,marginRight:10 }}>{p.outlet}</span>
+                  <span style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:18,color:C.dim }}>{p.title}</span>
+                </div>
+              </div>
+              {p.link?<a href={p.link} target="_blank" rel="noreferrer" style={{ color:C.gold,fontSize:13,fontFamily:"'Lato',sans-serif",whiteSpace:"nowrap",marginLeft:12 }}>View →</a>:<span style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted }}>{fmtDate(p.date)}</span>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!client.welcomeMessage&&pending.length===0&&recentWins.length===0&&!nextMilestone&&(
+        <EmptyState message="Nothing here yet — check back after our next session." icon="◈"/>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// BRANDING CLIENT: CALENDAR SECTION
+// ─────────────────────────────────────────────────────────────
+function BrandingCalendarSection({ client }) {
+  const today=new Date();
+  const [curMonth,setCurMonth]=useState(new Date(today.getFullYear(),today.getMonth(),1));
+  const [selected,setSelected]=useState(null);
+  const todayStr2=today.toISOString().split("T")[0];
+  const year=curMonth.getFullYear(),month=curMonth.getMonth();
+  const firstDay=new Date(year,month,1).getDay();
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const cells=[...Array(firstDay).fill(null),...Array.from({length:daysInMonth},(_,i)=>i+1)];
+  while(cells.length%7!==0) cells.push(null);
+  const ds=d=>d?`${year}-${String(month+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`:null;
+  const eventsForDay=d=>client.contentCalendar.filter(e=>e.scheduledDate===ds(d));
+  const meetings=d=>(client.meetings||[]).filter(m=>m.date===ds(d));
+  const typeOf=item=>item.type?.toLowerCase().includes("linkedin")?"linkedin":item.type?.toLowerCase().includes("newsletter")?"newsletter":item.type?.toLowerCase().includes("article")?"article":"article";
+  const typeColor=t=>({ linkedin:C.gold,newsletter:"#9a7fd4",article:"#6db58a",meeting:"rgba(255,255,255,0.3)" })[t]||C.muted;
+  const typeBg=t=>({ linkedin:"rgba(201,168,76,0.12)",newsletter:"rgba(154,127,212,0.12)",article:"rgba(109,181,138,0.12)",meeting:"rgba(255,255,255,0.05)" })[t]||"transparent";
+
+  // Pipeline summary from content calendar statuses
+  const stages=[
+    { key:"In Review",label:"In Review",   items:client.contentCalendar.filter(i=>i.approvalStatus==="Pending Approval") },
+    { key:"Approved", label:"Approved",    items:client.contentCalendar.filter(i=>i.approvalStatus==="Approved"&&i.status!=="Published") },
+    { key:"Published",label:"Published",   items:client.contentCalendar.filter(i=>i.status==="Published") },
+    { key:"Revision", label:"Revision Req",items:client.contentCalendar.filter(i=>i.approvalStatus==="Revision Requested") },
+  ];
+
+  return (
+    <div className="ks-up" style={{ paddingBottom:40 }}>
+      <SectionHeading>Calendar</SectionHeading>
+
+      {/* Pipeline strip */}
+      <div style={{ display:"flex",background:C.surface,border:`1px solid rgba(201,168,76,0.12)`,marginBottom:36 }}>
+        {stages.map((stage,si)=>(
+          <div key={stage.key} style={{ display:"flex",flexDirection:"column",alignItems:"center",gap:4,flex:1,padding:"14px 10px",borderRight:si<stages.length-1?"1px solid rgba(201,168,76,0.08)":"none" }}>
+            <div style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.16em",textTransform:"uppercase",color:C.muted }}>{stage.label}</div>
+            <div style={{ fontFamily:"'Playfair Display',serif",fontSize:22,color:stage.items.length>0?C.gold:"rgba(255,255,255,0.15)",fontWeight:700,lineHeight:1 }}>{stage.items.length}</div>
+            {stage.items.slice(0,2).map((item,ii)=>(
+              <div key={ii} style={{ display:"flex",alignItems:"center",gap:5,width:"100%",maxWidth:150 }}>
+                <PbPlatformDot type={typeOf(item)} size={5}/>
+                <span style={{ fontFamily:"'Lato',sans-serif",fontSize:10,color:"rgba(255,255,255,0.35)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{item.title}</span>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      {/* Month nav */}
+      <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:18 }}>
+        <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:20,color:C.white,fontWeight:300,letterSpacing:"0.04em" }}>{MONTHS[month]} {year}</div>
+        <div style={{ display:"flex",alignItems:"center",gap:16 }}>
+          <div style={{ display:"flex",gap:14 }}>
+            {[["linkedin",C.gold,"LinkedIn"],["newsletter","#9a7fd4","Newsletter"],["article","#6db58a","Article"]].map(([t,c,l])=>(
+              <div key={t} style={{ display:"flex",alignItems:"center",gap:5 }}>
+                <div style={{ width:6,height:6,borderRadius:"50%",background:c }}/>
+                <span style={{ fontFamily:"'Lato',sans-serif",fontSize:9,color:C.muted,letterSpacing:"0.1em",textTransform:"uppercase" }}>{l}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{ display:"flex",gap:4 }}>
+            <button className="btn-ghost" onClick={()=>setCurMonth(new Date(year,month-1,1))} style={{ padding:"5px 12px",fontSize:12 }}>‹</button>
+            <button className="btn-ghost" onClick={()=>setCurMonth(new Date(year,month+1,1))} style={{ padding:"5px 12px",fontSize:12 }}>›</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Day headers */}
+      <div style={{ display:"grid",gridTemplateColumns:"repeat(7,1fr)",background:"rgba(201,168,76,0.06)",marginBottom:1 }}>
+        {WEEKDAYS.map(d=><div key={d} style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.muted,textAlign:"center",padding:"9px 0" }}>{d}</div>)}
+      </div>
+      {/* Grid */}
+      <div className="cal-grid">
+        {cells.map((d,i)=>{
+          const dateStr=ds(d);
+          const events=d?eventsForDay(d):[];
+          const mtgs=d?meetings(d):[];
+          const isToday=dateStr===todayStr2;
+          const allItems=[...mtgs.map(m=>({...m,_isMeeting:true})),...events];
+          return (
+            <div key={i} className={`cal-cell${isToday?" today":""}${!d?" other-month":""}`} style={{ height:100,opacity:d?1:0.4 }}>
+              {d&&<span className="cal-day-num" style={{ color:isToday?C.gold:"rgba(255,255,255,0.35)",fontSize:12 }}>{d}</span>}
+              {allItems.slice(0,2).map(ev=>{
+                const t=ev._isMeeting?"meeting":typeOf(ev);
+                return (
+                  <button key={ev.id} className="cal-event" onClick={()=>setSelected(selected?.id===ev.id?null:ev)} style={{ background:typeBg(t),color:typeColor(t),border:`1px solid ${typeColor(t)}33`,fontSize:10 }}>
+                    {ev.title}
+                  </button>
+                );
+              })}
+              {allItems.length>2&&<div className="cal-more">+{allItems.length-2}</div>}
+            </div>
+          );
+        })}
+      </div>
+
+      {selected&&(
+        <div className="ks-in" style={{ marginTop:16,padding:"16px 20px",background:C.surface,border:`1px solid rgba(201,168,76,0.22)` }}>
+          <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start" }}>
+            <div style={{ display:"flex",alignItems:"center",gap:10 }}>
+              <PbPlatformDot type={selected._isMeeting?"meeting":typeOf(selected)} size={8}/>
+              <div>
+                <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:19,color:C.white }}>{selected.title}</div>
+                <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,marginTop:3 }}>
+                  {fmtDate(selected.scheduledDate||selected.date)}{selected.time?` · ${selected.time}`:""}
+                  {selected.status?` · ${selected.status}`:""}
+                  {selected.approvalStatus?` · ${selected.approvalStatus}`:""}
+                </div>
+              </div>
+            </div>
+            <button onClick={()=>setSelected(null)} style={{ background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:16 }}>✕</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// BRANDING CLIENT: FLYWHEEL SECTION (Authority + Influence)
+// ─────────────────────────────────────────────────────────────
+function BrandingFlywheelSection({ client, onUpdate }) {
+  const clusters=client.clusters||[];
+  const [activeIdx,setActiveIdx]=useState(Math.max(0,clusters.findIndex(c=>c.status==="active")));
+  const [nodeDetail,setNodeDetail]=useState(null);
+  const [idea,setIdea]=useState("");
+  const [submitted,setSubmitted]=useState(false);
+
+  // Use brand voice explore ideas as idea submission
+  const handleSubmitIdea=()=>{
+    if(!idea.trim()) return;
+    const newIdea={ id:uid(),idea:idea.trim(),response:"",ts:new Date().toISOString(),hasResponse:false };
+    const bv=client.brandVoice||{};
+    onUpdate({...client,brandVoice:{...bv,exploreIdeas:[...(bv.exploreIdeas||[]),newIdea]}});
+    setSubmitted(true);
+  };
+
+  if(!clusters.length) return (
+    <div className="ks-up">
+      <SectionHeading sub="Your content clusters will appear here once Mikaela sets them up">Flywheel</SectionHeading>
+      <EmptyState message="Your flywheel clusters will be built here after your first content strategy session." icon="⟳"/>
+    </div>
+  );
+
+  const cluster=clusters[activeIdx]||clusters[0];
+  const allNodes=[
+    { item:cluster.article,  label:"Article",   key:"article" },
+    { item:cluster.newsletter,label:"Newsletter",key:"newsletter" },
+    ...(cluster.posts||[]).map((p,i)=>({ item:p,label:["Story","Insight","Hot Take"][i],key:`post${i}` })),
+  ];
+  const statusLabel={ complete:"Fully Published",active:"In Progress",upcoming:"In Planning" };
+
+  return (
+    <div className="ks-up" style={{ paddingBottom:40 }}>
+      <SectionHeading sub="One idea. An entire body of work.">Your Flywheel</SectionHeading>
+      <div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:16,color:C.muted,marginBottom:32,maxWidth:520,lineHeight:1.7 }}>
+        Every cluster begins as a single article idea. Watch how each one expands into a newsletter, three LinkedIn posts, and compounding reach.
+      </div>
+
+      {/* Cluster tabs */}
+      <div style={{ display:"flex",gap:0,borderBottom:`1px solid rgba(201,168,76,0.1)`,marginBottom:44 }}>
+        {clusters.map((c,i)=>(
+          <button key={c.id||i} onClick={()=>{setActiveIdx(i);setNodeDetail(null);}} style={{ padding:"10px 20px 12px",background:"none",border:"none",borderBottom:`2px solid ${activeIdx===i?C.gold:"transparent"}`,marginBottom:-1,fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",color:activeIdx===i?C.gold:C.muted,cursor:"pointer",transition:"all 0.2s",display:"flex",alignItems:"center",gap:7 }}>
+            <PbStatusDot status={c.status} size={5}/>
+            {c.title.length>24?c.title.slice(0,24)+"…":c.title}
+          </button>
+        ))}
+      </div>
+
+      {/* Main view */}
+      <div style={{ display:"flex",gap:64,alignItems:"flex-start",flexWrap:"wrap" }}>
+        {/* Orbital */}
+        <div style={{ display:"flex",flexDirection:"column",alignItems:"center",gap:16 }}>
+          <OrbitalDiagram cluster={cluster} size={300} onNodeClick={n=>setNodeDetail(nodeDetail?.key===n.key?null:n)}/>
+          <div style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.16em",textTransform:"uppercase",color:cluster.status==="complete"?C.gold:cluster.status==="active"?"rgba(201,168,76,0.6)":C.muted,display:"flex",alignItems:"center",gap:6 }}>
+            <PbStatusDot status={cluster.status} size={5} animate/>
+            {statusLabel[cluster.status]||cluster.status}
+          </div>
+          {cluster.status!=="upcoming"&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,color:C.muted,fontStyle:"italic",textAlign:"center",maxWidth:200 }}>Tap any node to preview content</div>}
+        </div>
+
+        {/* Right panel */}
+        <div style={{ flex:1,minWidth:260 }}>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:24,color:C.white,lineHeight:1.3,marginBottom:24 }}>{cluster.title}</div>
+
+          {/* Node detail */}
+          {nodeDetail&&nodeDetail.item?.preview&&(
+            <div className="ks-in" style={{ padding:"16px 20px",background:C.surface,border:"1px solid rgba(201,168,76,0.25)",marginBottom:20 }}>
+              <div style={{ display:"flex",alignItems:"center",gap:10,marginBottom:10 }}>
+                <PbStatusDot status={nodeDetail.item.status} size={6}/>
+                <span style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.muted }}>{nodeDetail.label}</span>
+                {nodeDetail.item.reach&&<span style={{ marginLeft:"auto",fontFamily:"'Playfair Display',serif",fontSize:15,color:C.gold,fontWeight:700 }}>{nodeDetail.item.reach.toLocaleString()} reached</span>}
+              </div>
+              <div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:16,color:C.dim,lineHeight:1.75 }}>{nodeDetail.item.preview}</div>
+              <button onClick={()=>setNodeDetail(null)} style={{ marginTop:12,background:"none",border:"none",fontFamily:"'Lato',sans-serif",fontSize:10,color:C.muted,cursor:"pointer",letterSpacing:"0.1em" }}>✕ Close</button>
+            </div>
+          )}
+
+          {/* Piece list */}
+          <div>
+            {allNodes.map((n,i)=>{
+              const pct=n.item?.reach&&cluster.reach>0?Math.round((n.item.reach/cluster.reach)*100):0;
+              const isActive=nodeDetail?.key===n.key;
+              return (
+                <div key={i} onClick={()=>n.item?.preview&&setNodeDetail(isActive?null:n)} style={{ padding:"13px 0",borderBottom:"1px solid rgba(255,255,255,0.04)",cursor:n.item?.preview?"pointer":"default",paddingLeft:isActive?8:0,background:isActive?"rgba(201,168,76,0.02)":"transparent",transition:"all 0.2s" }}>
+                  <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:n.item?.status==="published"?6:0 }}>
+                    <div style={{ display:"flex",alignItems:"center",gap:9 }}>
+                      <PbStatusDot status={n.item?.status} size={6} animate={n.item?.status==="in-review"}/>
+                      <span style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:n.item?.status==="published"?C.dim:n.item?.status==="in-review"?"rgba(255,255,255,0.5)":"rgba(255,255,255,0.2)",letterSpacing:"0.03em" }}>{n.label}</span>
+                      {n.item?.status==="in-review"&&<span style={{ fontFamily:"'Lato',sans-serif",fontSize:9,color:"rgba(212,149,106,0.9)",letterSpacing:"0.1em",textTransform:"uppercase",background:"rgba(212,149,106,0.1)",border:"1px solid rgba(212,149,106,0.3)",padding:"1px 6px" }}>In Review</span>}
+                    </div>
+                    <span style={{ fontFamily:"'Playfair Display',serif",fontSize:14,color:n.item?.status==="published"?C.gold:"rgba(255,255,255,0.12)",fontWeight:700 }}>{n.item?.reach?n.item.reach.toLocaleString():"—"}</span>
+                  </div>
+                  {n.item?.status==="published"&&<div style={{ height:2,background:"rgba(255,255,255,0.04)",borderRadius:1,overflow:"hidden" }}><div style={{ height:"100%",width:`${pct}%`,background:`linear-gradient(90deg,rgba(201,168,76,0.3),${C.gold})`,borderRadius:1 }}/></div>}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Idea suggestion */}
+          <div style={{ marginTop:36,padding:"20px 22px",background:C.surface,border:"1px solid rgba(201,168,76,0.14)" }}>
+            {submitted?(
+              <div className="ks-in" style={{ display:"flex",alignItems:"center",gap:12 }}>
+                <div style={{ width:8,height:8,borderRadius:"50%",background:"#6db58a",boxShadow:"0 0 10px #6db58a" }}/>
+                <div>
+                  <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:17,color:C.white,marginBottom:3 }}>Idea received</div>
+                  <div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted }}>Mikaela will review this for your next content cluster.</div>
+                </div>
+              </div>
+            ):(
+              <>
+                <div style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.22em",textTransform:"uppercase",color:C.muted,marginBottom:10 }}>Suggest Your Next Article Idea</div>
+                <div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:13,color:"rgba(255,255,255,0.3)",marginBottom:14,lineHeight:1.6 }}>A theme, a contrarian take, something you keep saying in meetings — share a seed and we'll build the next flywheel around it.</div>
+                <textarea className="ks-field" rows={3} value={idea} onChange={e=>setIdea(e.target.value)} placeholder="e.g. Most executives are using AI to speed up the wrong things…" style={{ marginBottom:10 }}/>
+                <button className="btn-gold" onClick={handleSubmitIdea} disabled={!idea.trim()}>Submit Idea →</button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// BRANDING CLIENT: JOURNEY SECTION
+// ─────────────────────────────────────────────────────────────
+function BrandingJourneySection({ client }) {
+  const milestones=client.milestones||[];
+  const completed=milestones.filter(m=>m.status==="Complete"||m.status==="complete").length;
+  const pct=milestones.length>0?Math.round((completed/milestones.length)*100):0;
+  const [barW,setBarW]=useState(0);
+  useEffect(()=>{ const t=setTimeout(()=>setBarW(pct),400); return ()=>clearTimeout(t); },[pct]);
+
+  const sm=client.strategyMap||{};
+  const pillars=sm.pillars||[];
+  const goals=(sm.goals||[]).filter(g=>g.target>0);
+
+  return (
+    <div className="ks-up" style={{ paddingBottom:40 }}>
+      <SectionHeading>Your Journey</SectionHeading>
+
+      {/* Progress bar */}
+      {milestones.length>0&&(
+        <div style={{ marginBottom:52,maxWidth:520 }}>
+          <div style={{ display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:12 }}>
+            <span style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:17,color:C.dim,fontStyle:"italic" }}>{completed} of {milestones.length} milestones reached</span>
+            <span style={{ fontFamily:"'Playfair Display',serif",fontSize:32,color:C.gold,fontWeight:700 }}>{pct}%</span>
+          </div>
+          <div style={{ height:2,background:"rgba(201,168,76,0.07)",borderRadius:1,overflow:"hidden" }}>
+            <div style={{ height:"100%",width:`${barW}%`,background:`linear-gradient(90deg,rgba(201,168,76,0.4),${C.gold})`,borderRadius:1,transition:"width 1.8s cubic-bezier(0.16,1,0.3,1)",boxShadow:"4px 0 14px rgba(201,168,76,0.3)" }}/>
+          </div>
+        </div>
+      )}
+
+      {/* Milestone timeline */}
+      {milestones.length>0?(
+        <div style={{ position:"relative",paddingLeft:36,marginBottom:52 }}>
+          <div className="tl-line" style={{ left:6 }}/>
+          {milestones.map((m,i)=>{
+            const done=m.status==="Complete"||m.status==="complete";
+            const active=m.status==="In Progress"||m.status==="active";
+            const upcoming=m.status==="Not Started"||m.status==="upcoming";
+            return (
+              <div key={m.id||i} style={{ position:"relative",marginBottom:i<milestones.length-1?28:0,opacity:upcoming?0.38:1,animation:"fadeUp 0.45s cubic-bezier(0.16,1,0.3,1) both",animationDelay:`${i*55}ms` }}>
+                <div className="tl-dot" style={{ background:done?C.gold:active?"transparent":"transparent",border:`${done?2:1}px solid ${done?C.gold:active?"rgba(201,168,76,0.5)":"rgba(201,168,76,0.18)"}`,boxShadow:done?"0 0 12px rgba(201,168,76,0.5)":active?"0 0 8px rgba(201,168,76,0.25)":"none",display:"flex",alignItems:"center",justifyContent:"center",animation:active?"tl-pulse 2.2s ease-in-out infinite":"none" }}>
+                  {done&&<div style={{ width:5,height:5,borderRadius:"50%",background:C.surface }}/>}
+                  {active&&<div style={{ width:5,height:5,borderRadius:"50%",background:C.gold }}/>}
+                </div>
+                <div style={{ display:"flex",alignItems:"baseline",gap:12,flexWrap:"wrap",marginBottom:(m.note||m.completionNotes)?4:0 }}>
+                  <span style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:19,color:done?C.white:active?C.goldL:C.dim,fontStyle:active?"italic":"normal",lineHeight:1.2 }}>{m.name}</span>
+                  <span style={{ fontFamily:"'Lato',sans-serif",fontSize:10,color:done?C.gold:C.muted,letterSpacing:"0.08em",whiteSpace:"nowrap" }}>
+                    {done?"✓ ":""}{fmtDate(m.completionDate||m.date||m.targetDate)}
+                  </span>
+                </div>
+                {(m.note||m.completionNotes)&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:"rgba(255,255,255,0.3)",lineHeight:1.65 }}>{m.note||m.completionNotes}</div>}
+              </div>
+            );
+          })}
+        </div>
+      ):(
+        <EmptyState message="Your journey milestones will appear here once Mikaela sets them up." icon="◆"/>
+      )}
+
+      {/* Goals */}
+      {goals.length>0&&(
+        <div style={{ marginBottom:44 }}>
+          <GoldRule opacity={0.1} my={0}/>
+          <div style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.22em",textTransform:"uppercase",color:C.muted,margin:"28px 0 20px" }}>Goals</div>
+          <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:14 }}>
+            {goals.map(g=>{
+              const p=Math.min(100,Math.round((g.current/g.target)*100));
+              return (
+                <div key={g.id} style={{ padding:"18px 20px",background:p>=100?"rgba(201,168,76,0.08)":"rgba(255,255,255,0.03)",border:`1px solid ${p>=100?C.gold:"rgba(255,255,255,0.08)"}` }}>
+                  <div style={{ display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:8,marginBottom:10 }}>
+                    <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:18,color:C.text,lineHeight:1.3 }}>{g.label||g.name}</div>
+                    {p>=100?<span style={{ color:C.gold,fontSize:14 }}>✓</span>:<span style={{ fontFamily:"'Playfair Display',serif",fontSize:22,color:C.gold,fontWeight:700,lineHeight:1 }}>{p}%</span>}
+                  </div>
+                  <ProgressBar value={p} trajectory={p>=75?"ahead":p>=40?"on-track":"needs-attention"} animate={true}/>
+                  <div style={{ display:"flex",justifyContent:"space-between",marginTop:8 }}>
+                    <span style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted }}>{g.current?.toLocaleString()} {g.unit}</span>
+                    <span style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted }}>of {g.target?.toLocaleString()}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Brand positioning */}
+      {(sm.northStar||pillars.length>0||sm.audience)&&(
+        <div>
+          <GoldRule opacity={0.1} my={0}/>
+          <div style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.22em",textTransform:"uppercase",color:C.muted,margin:"28px 0 24px" }}>Your Brand</div>
+          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:28 }}>
+            {sm.northStar&&(
+              <div>
+                <div style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.18em",textTransform:"uppercase",color:C.muted,marginBottom:10 }}>North Star</div>
+                <div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:18,color:C.goldL,lineHeight:1.65 }}>"{sm.northStar}"</div>
+              </div>
+            )}
+            {sm.audience&&(
+              <div>
+                <div style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.18em",textTransform:"uppercase",color:C.muted,marginBottom:10 }}>Audience</div>
+                <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:16,color:C.dim,lineHeight:1.7 }}>{sm.audience}</div>
+              </div>
+            )}
+            {pillars.length>0&&(
+              <div style={{ gridColumn:"1/-1" }}>
+                <div style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.18em",textTransform:"uppercase",color:C.muted,marginBottom:12 }}>Content Pillars</div>
+                <div style={{ display:"flex",flexWrap:"wrap",gap:8 }}>
+                  {pillars.map((p,i)=>(
+                    <span key={p.id||i} style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:p.color||C.gold,background:`${p.color||C.gold}14`,border:`1px solid ${p.color||C.gold}38`,padding:"4px 14px",letterSpacing:"0.04em" }}>{p.name}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 // CLIENT DASHBOARD
 // ─────────────────────────────────────────────────────────────
 function ClientDashboard({ client, session, onLogout, onUpdate, apiKey }) {
@@ -3748,55 +4394,67 @@ function ClientDashboard({ client, session, onLogout, onUpdate, apiKey }) {
   const newDirectMsgs=(client.directMessages||[]).filter(m=>m.from==="mikaela").length;
   const unansweredIdeas=((client.brandVoice?.exploreIdeas)||[]).filter(i=>!i.hasResponse).length;
 
-  const navSections=[
+  // ── NAV: branding clients get the new four-section layout ──
+  const brandingNav=[
+    { items:[
+      { key:"home",     label:"Home",     icon:"◈", active:view==="home",     onClick:()=>setView("home"),     badge:(pendingApprovals||0)+(newSince.messages||0)||null },
+      { key:"calendar", label:"Calendar", icon:"◷", active:view==="calendar", onClick:()=>setView("calendar") },
+      ...(authority?[{ key:"flywheel",label:"Flywheel",icon:"⟳",active:view==="flywheel",onClick:()=>setView("flywheel"),badge:unansweredIdeas||null }]:[]),
+      { key:"journey",  label:"Journey",  icon:"◆", active:view==="journey",  onClick:()=>setView("journey") },
+    ]},
+    { label:"Direct",items:[
+      { key:"messages", label:"Messages",icon:"◇",active:view==="messages",onClick:()=>setView("messages"),badge:newSince.messages>0?newSince.messages:null },
+    ]},
+    { label:"Account",items:[
+      { key:"documents",   label:"Documents",  active:view==="documents",   onClick:()=>setView("documents") },
+      { key:"preferences", label:"Preferences",active:view==="preferences", onClick:()=>setView("preferences") },
+    ]},
+  ];
+
+  const manuscriptNav=[
     { items:[
       { key:"home",label:"Home",icon:"◈",active:view==="home",onClick:()=>setView("home") },
       { key:"messages",label:"Messages",icon:"◇",active:view==="messages",onClick:()=>setView("messages"),badge:newSince.messages>0?newSince.messages:null },
       { key:"calendar",label:"Calendar",icon:"◷",active:view==="calendar",onClick:()=>setView("calendar"),badge:unreadMessages||null },
     ]},
-    ...(branding?[{ label:"Content",items:[
-      { key:"content",label:"Content",active:view==="content",onClick:()=>setView("content"),badge:pendingApprovals||null },
-      { key:"momentum",label:"Your Momentum",active:view==="momentum",onClick:()=>setView("momentum") },
-      ...(hasAuthority(client.tier)?[{ key:"results",label:"Results",active:view==="results",onClick:()=>setView("results") }]:[]),
-    ]}]:[]),
-    ...(branding&&hasAuthority(client.tier)?[{ label:"Brand",items:[
-      { key:"progress",label:"Progress",active:view==="progress",onClick:()=>setView("progress") },
-      { key:"strategy",label:"Strategy Map",active:view==="strategy",onClick:()=>setView("strategy") },
-      ...(influence?[{ key:"ai",label:"Search & Discovery",active:view==="ai",onClick:()=>setView("ai") }]:[]),
-      { key:"explore",label:"Explore Ideas",active:view==="explore",onClick:()=>setView("explore"),badge:unansweredIdeas||null },
-    ]}]:[]),
-    ...(branding&&!hasAuthority(client.tier)?[{ label:"Brand",items:[
-      { key:"explore",label:"Explore Ideas",active:view==="explore",onClick:()=>setView("explore"),badge:unansweredIdeas||null },
-    ]}]:[]),
-    ...(manuscript?[{ label:"Manuscript",items:[
+    { label:"Manuscript",items:[
       { key:"manuscript",label:"Chapters",active:view==="manuscript",onClick:()=>setView("manuscript") },
       { key:"pipeline",label:"Production Pipeline",active:view==="pipeline",onClick:()=>setView("pipeline") },
       ...(client.tier==="coaching"?[{ key:"coaching",label:"Book Coaching",active:view==="coaching",onClick:()=>setView("coaching"),badge:((client.writingAssignments||[]).filter(a=>a.status!=="Complete").length)||null }]:[]),
-    ]}]:[]),
+    ]},
     { label:"Account",items:[
       { key:"documents",label:"Documents",active:view==="documents",onClick:()=>setView("documents") },
       { key:"preferences",label:"Preferences",active:view==="preferences",onClick:()=>setView("preferences") },
     ]},
   ];
 
+  const navSections=branding?brandingNav:manuscriptNav;
+
   const renderView=()=>{
     const p={client,session,isAdmin:false,onUpdate,apiKey};
+    // ── Branding clients → new four-section portal ──
+    if(branding){
+      switch(view){
+        case "home":     return <BrandingHomeSection     client={client} session={session} onUpdate={onUpdate} newSince={newSince} onNavigate={setView}/>;
+        case "calendar": return <BrandingCalendarSection client={client}/>;
+        case "flywheel": return authority?<BrandingFlywheelSection client={client} onUpdate={onUpdate}/> : <BrandingHomeSection client={client} session={session} onUpdate={onUpdate} newSince={newSince} onNavigate={setView}/>;
+        case "journey":  return <BrandingJourneySection  client={client}/>;
+        case "messages": return <DirectMessagesView client={client} session={session} onUpdate={onUpdate}/>;
+        case "documents":   return <DocumentsView {...p}/>;
+        case "preferences": return <ClientSettingsView client={client} session={session} onUpdate={onUpdate}/>;
+        default: return <BrandingHomeSection client={client} session={session} onUpdate={onUpdate} newSince={newSince} onNavigate={setView}/>;
+      }
+    }
+    // ── Manuscript clients → existing views unchanged ──
     switch(view){
-      case "home": return <HomeView client={client} session={session} onUpdate={onUpdate} newSince={newSince} onNavigate={setView}/>;
-      case "messages": return <DirectMessagesView client={client} session={session} onUpdate={onUpdate}/>;
-      case "calendar": return <CalendarView {...p}/>;
-      case "content": return <ContentView {...p}/>;
-      case "momentum": return <PerformanceView client={client}/>;
-      case "results": return <ResultsView client={client}/>;
-      case "progress": return <ProgressView client={client} isAdmin={false} onUpdate={onUpdate}/>;
-      case "strategy": return <StrategyMapView client={client} isAdmin={false} onUpdate={onUpdate}/>;
-      case "ai": return <AIVisibilityView client={client}/>;
-      case "manuscript": return <ManuscriptView client={client}/>;
-      case "pipeline": return <BookPipelineView client={client} isAdmin={false} onUpdate={onUpdate}/>;
-      case "coaching": return <BookCoachingView client={client} isAdmin={false} session={session} onUpdate={onUpdate}/>;
-      case "explore": return <ExploreIdeasView client={client} onUpdate={onUpdate} apiKey={apiKey}/>;
+      case "home":      return <HomeView client={client} session={session} onUpdate={onUpdate} newSince={newSince} onNavigate={setView}/>;
+      case "messages":  return <DirectMessagesView client={client} session={session} onUpdate={onUpdate}/>;
+      case "calendar":  return <CalendarView {...p}/>;
+      case "manuscript":return <ManuscriptView client={client}/>;
+      case "pipeline":  return <BookPipelineView client={client} isAdmin={false} onUpdate={onUpdate}/>;
+      case "coaching":  return <BookCoachingView client={client} isAdmin={false} session={session} onUpdate={onUpdate}/>;
       case "documents": return <DocumentsView {...p}/>;
-      case "preferences": return <ClientSettingsView client={client} session={session} onUpdate={onUpdate}/>;
+      case "preferences":return <ClientSettingsView client={client} session={session} onUpdate={onUpdate}/>;
       default: return null;
     }
   };
