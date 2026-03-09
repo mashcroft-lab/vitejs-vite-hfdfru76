@@ -20,48 +20,53 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
     @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
     @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
     @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fillBar { from { width:0%; } to { width:var(--bar-w); } }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.45; } }
+    @keyframes goldFlash { 0% { box-shadow:0 0 0 0 rgba(201,168,76,0); } 40% { box-shadow:0 0 0 12px rgba(201,168,76,0.35); } 100% { box-shadow:0 0 0 20px rgba(201,168,76,0); } }
     .ks-up { animation: fadeUp 0.45s cubic-bezier(0.16,1,0.3,1) both; }
     .ks-in { animation: fadeIn 0.25s ease both; }
+    .milestone-flash { animation: goldFlash 0.7s ease-out; }
+    .tl-pulse { animation: pulse 2.5s ease-in-out infinite; }
 
-    .ks-input { background: transparent; border: none; border-bottom: 1px solid rgba(201,168,76,0.3); color: #fff; font-family:'Lato',sans-serif; font-size:14px; padding:10px 2px; width:100%; outline:none; letter-spacing:0.03em; transition:border-color 0.2s; }
+    .ks-input { background: transparent; border: none; border-bottom: 1px solid rgba(201,168,76,0.3); color: #fff; font-family:'Lato',sans-serif; font-size:16px; padding:11px 2px; width:100%; outline:none; letter-spacing:0.03em; transition:border-color 0.2s; }
     .ks-input:focus { border-bottom-color: #c9a84c; }
     .ks-input::placeholder { color: rgba(255,255,255,0.35); }
 
-    .ks-field { background: rgba(255,255,255,0.05); border: 1px solid rgba(201,168,76,0.2); color: #fff; font-family:'Lato',sans-serif; font-size:13px; padding:9px 12px; width:100%; outline:none; transition:border-color 0.2s; border-radius:1px; }
+    .ks-field { background: rgba(255,255,255,0.05); border: 1px solid rgba(201,168,76,0.2); color: #fff; font-family:'Lato',sans-serif; font-size:15px; padding:10px 14px; width:100%; outline:none; transition:border-color 0.2s; border-radius:1px; }
     .ks-field:focus { border-color: rgba(201,168,76,0.5); }
     .ks-field::placeholder { color: rgba(255,255,255,0.3); }
     .ks-field option { background:#26011e; }
-    textarea.ks-field { resize:vertical; min-height:80px; line-height:1.6; }
+    textarea.ks-field { resize:vertical; min-height:90px; line-height:1.7; }
     select.ks-field { cursor:pointer; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23c9a84c' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; padding-right:30px; }
 
-    .btn-gold { background:linear-gradient(135deg,#c9a84c,#e2c47a); border:none; color:#180013; font-family:'Lato',sans-serif; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; padding:12px 28px; cursor:pointer; transition:opacity 0.2s, transform 0.15s; display:inline-block; }
+    .btn-gold { background:linear-gradient(135deg,#c9a84c,#e2c47a); border:none; color:#180013; font-family:'Lato',sans-serif; font-size:12px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; padding:13px 30px; cursor:pointer; transition:opacity 0.2s, transform 0.15s; display:inline-block; }
     .btn-gold:hover { opacity:0.88; transform:translateY(-1px); }
     .btn-gold:disabled { opacity:0.35; cursor:not-allowed; transform:none; }
 
-    .btn-ghost { background:transparent; border:1px solid rgba(201,168,76,0.3); color:rgba(201,168,76,0.8); font-family:'Lato',sans-serif; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; padding:9px 18px; cursor:pointer; transition:all 0.2s; }
+    .btn-ghost { background:transparent; border:1px solid rgba(201,168,76,0.3); color:rgba(201,168,76,0.8); font-family:'Lato',sans-serif; font-size:12px; letter-spacing:0.1em; text-transform:uppercase; padding:10px 20px; cursor:pointer; transition:all 0.2s; }
     .btn-ghost:hover { border-color:#c9a84c; color:#c9a84c; background:rgba(201,168,76,0.05); }
 
-    .btn-sm { background:transparent; border:1px solid rgba(201,168,76,0.22); color:rgba(255,255,255,0.6); font-family:'Lato',sans-serif; font-size:10px; letter-spacing:0.09em; text-transform:uppercase; padding:5px 11px; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+    .btn-sm { background:transparent; border:1px solid rgba(201,168,76,0.22); color:rgba(255,255,255,0.6); font-family:'Lato',sans-serif; font-size:11px; letter-spacing:0.09em; text-transform:uppercase; padding:6px 13px; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
     .btn-sm:hover { border-color:rgba(201,168,76,0.55); color:#fff; }
 
-    .btn-approve { background:rgba(100,180,100,0.1); border:1px solid rgba(100,180,100,0.35); color:rgba(140,210,140,0.95); font-family:'Lato',sans-serif; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; padding:5px 11px; cursor:pointer; transition:all 0.2s; }
+    .btn-approve { background:rgba(100,180,100,0.1); border:1px solid rgba(100,180,100,0.35); color:rgba(140,210,140,0.95); font-family:'Lato',sans-serif; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; padding:6px 13px; cursor:pointer; transition:all 0.2s; }
     .btn-approve:hover { background:rgba(100,180,100,0.2); }
-    .btn-revise { background:rgba(200,120,80,0.1); border:1px solid rgba(200,120,80,0.35); color:rgba(230,150,110,0.95); font-family:'Lato',sans-serif; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; padding:5px 11px; cursor:pointer; transition:all 0.2s; }
+    .btn-revise { background:rgba(200,120,80,0.1); border:1px solid rgba(200,120,80,0.35); color:rgba(230,150,110,0.95); font-family:'Lato',sans-serif; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; padding:6px 13px; cursor:pointer; transition:all 0.2s; }
     .btn-revise:hover { background:rgba(200,120,80,0.2); }
-    .btn-del { background:transparent; border:1px solid rgba(210,100,100,0.28); color:rgba(210,110,110,0.7); font-family:'Lato',sans-serif; font-size:10px; letter-spacing:0.08em; text-transform:uppercase; padding:5px 11px; cursor:pointer; transition:all 0.2s; }
+    .btn-del { background:transparent; border:1px solid rgba(210,100,100,0.28); color:rgba(210,110,110,0.7); font-family:'Lato',sans-serif; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; padding:6px 13px; cursor:pointer; transition:all 0.2s; }
     .btn-del:hover { border-color:rgba(210,100,100,0.6); color:rgba(220,130,130,0.95); }
 
-    .nav-item { display:flex; align-items:center; gap:9px; padding:10px 20px 10px 18px; font-family:'Lato',sans-serif; font-size:11px; font-weight:400; letter-spacing:0.11em; text-transform:uppercase; color:rgba(255,255,255,0.5); cursor:pointer; transition:all 0.18s; border-left:2px solid transparent; user-select:none; }
+    .nav-item { display:flex; align-items:center; gap:9px; padding:11px 20px 11px 18px; font-family:'Lato',sans-serif; font-size:12px; font-weight:400; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.5); cursor:pointer; transition:all 0.18s; border-left:2px solid transparent; user-select:none; }
     .nav-item:hover { color:rgba(255,255,255,0.85); background:rgba(201,168,76,0.05); }
     .nav-item.active { color:#c9a84c; border-left-color:#c9a84c; background:rgba(201,168,76,0.08); }
-    .nav-section { padding:14px 20px 5px; font-family:'Lato',sans-serif; font-size:9px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:rgba(255,255,255,0.25); }
+    .nav-section { padding:16px 20px 6px; font-family:'Lato',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:rgba(255,255,255,0.25); }
 
     .modal-overlay { position:fixed; inset:0; background:rgba(24,0,19,0.88); backdrop-filter:blur(8px); z-index:200; display:flex; align-items:center; justify-content:center; padding:16px; animation:fadeIn 0.2s ease; }
     .modal-box { background:#26011e; border:1px solid rgba(201,168,76,0.25); width:100%; max-width:520px; max-height:90vh; overflow-y:auto; padding:30px 34px; animation:fadeUp 0.28s cubic-bezier(0.16,1,0.3,1); }
 
     .ks-table { width:100%; border-collapse:collapse; }
-    .ks-table th { font-family:'Lato',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.15em; text-transform:uppercase; color:rgba(201,168,76,0.55); padding:8px 12px 8px 0; text-align:left; border-bottom:1px solid rgba(201,168,76,0.12); }
-    .ks-table td { font-family:'Lato',sans-serif; font-size:13px; color:rgba(255,255,255,0.88); padding:12px 12px 12px 0; border-bottom:1px solid rgba(255,255,255,0.05); vertical-align:middle; }
+    .ks-table th { font-family:'Lato',sans-serif; font-size:11px; font-weight:700; letter-spacing:0.15em; text-transform:uppercase; color:rgba(201,168,76,0.55); padding:9px 12px 9px 0; text-align:left; border-bottom:1px solid rgba(201,168,76,0.12); }
+    .ks-table td { font-family:'Lato',sans-serif; font-size:15px; color:rgba(255,255,255,0.88); padding:14px 12px 14px 0; border-bottom:1px solid rgba(255,255,255,0.05); vertical-align:middle; }
     .ks-table tr:last-child td { border-bottom:none; }
     .ks-table tr:hover td { background:rgba(201,168,76,0.03); }
 
@@ -71,15 +76,15 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
     .cal-cell.other-month { background:#130010; }
     .cal-cell.today { background:#1e0018; outline:1px solid rgba(201,168,76,0.35); outline-offset:-1px; }
     .cal-cell.drag-over { background:rgba(201,168,76,0.1) !important; }
-    .cal-event { font-family:'Lato',sans-serif; font-size:10px; letter-spacing:0.03em; padding:2px 6px; margin-bottom:2px; cursor:pointer; border-radius:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:opacity 0.15s; display:block; width:100%; text-align:left; border:none; max-width:100%; box-sizing:border-box; }
+    .cal-event { font-family:'Lato',sans-serif; font-size:11px; letter-spacing:0.03em; padding:2px 6px; margin-bottom:2px; cursor:pointer; border-radius:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:opacity 0.15s; display:block; width:100%; text-align:left; border:none; max-width:100%; box-sizing:border-box; }
     .cal-event:hover { opacity:0.78; }
-    .cal-day-num { font-family:'Playfair Display',serif; font-size:12px; margin-bottom:4px; display:block; }
-    .cal-more { font-family:'Lato',sans-serif; font-size:9px; color:rgba(255,255,255,0.35); padding:1px 6px; letter-spacing:0.06em; }
+    .cal-day-num { font-family:'Playfair Display',serif; font-size:13px; margin-bottom:4px; display:block; }
+    .cal-more { font-family:'Lato',sans-serif; font-size:10px; color:rgba(255,255,255,0.35); padding:1px 6px; letter-spacing:0.06em; }
 
     /* Tags */
-    .tag { display:inline-flex; align-items:center; gap:5px; background:rgba(201,168,76,0.1); border:1px solid rgba(201,168,76,0.22); color:rgba(255,255,255,0.85); font-family:'Lato',sans-serif; font-size:11px; padding:3px 10px; margin:2px; }
+    .tag { display:inline-flex; align-items:center; gap:5px; background:rgba(201,168,76,0.1); border:1px solid rgba(201,168,76,0.22); color:rgba(255,255,255,0.85); font-family:'Lato',sans-serif; font-size:12px; padding:4px 11px; margin:2px; }
     .tag-avoid { background:rgba(200,90,80,0.08); border-color:rgba(200,90,80,0.25); color:rgba(230,150,140,0.9); }
-    .tag-remove { cursor:pointer; color:rgba(255,255,255,0.4); font-size:14px; line-height:1; margin-left:2px; }
+    .tag-remove { cursor:pointer; color:rgba(255,255,255,0.4); font-size:15px; line-height:1; margin-left:2px; }
     .tag-remove:hover { color:rgba(255,255,255,0.9); }
 
     /* Timeline */
@@ -108,7 +113,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
     .upload-zone:hover { border-color:rgba(201,168,76,0.6); background:rgba(201,168,76,0.06); }
 
     /* Collapsible nav section header */
-    .nav-section-toggle { display:flex; align-items:center; justify-content:space-between; padding:14px 20px 5px; font-family:'Lato',sans-serif; font-size:9px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:rgba(255,255,255,0.25); cursor:pointer; user-select:none; transition:color 0.15s; }
+    .nav-section-toggle { display:flex; align-items:center; justify-content:space-between; padding:16px 20px 6px; font-family:'Lato',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:rgba(255,255,255,0.25); cursor:pointer; user-select:none; transition:color 0.15s; }
     .nav-section-toggle:hover { color:rgba(255,255,255,0.45); }
     .nav-section-toggle .toggle-arrow { font-size:14px; transition:transform 0.22s; line-height:1; }
     .nav-section-toggle.collapsed .toggle-arrow { transform:rotate(-90deg); }
@@ -159,7 +164,7 @@ const C = {
 const TIERS = ["foundation","authority","influence","ghostwriting","coaching","editing"];
 const TIER_LABELS = { foundation:"Foundation",authority:"Authority",influence:"Influence",ghostwriting:"Full Ghostwriting",coaching:"Book Coaching",editing:"Book Editing" };
 const TIER_COLORS = { foundation:"#8a7a4c",authority:"#c9a84c",influence:"#e2c47a",ghostwriting:"#7a8aaf",coaching:"#7a9a8a",editing:"#9a8a7a" };
-const CONTENT_STATUSES = ["In Progress","In Review","Published"];
+const CONTENT_STATUSES = ["In Review","Approved","Published"];
 const APPROVAL_STATUSES = ["Pending Approval","Approved","Revision Requested"];
 const MILESTONE_STATUSES = ["Not Started","In Progress","Complete"];
 const GOAL_TRAJECTORIES = ["on-track","ahead","needs-attention"];
@@ -222,7 +227,7 @@ const mkClient = o => ({
   performanceReport:{ period:"",engagement:"",reach:"",placements:"",summary:"" },
   milestones:[], chapters:[], estimatedCompletion:"", manuscriptNotes:"",
   bookTitle:"", bookSubtitle:"", bookGenre:"", bookLogline:"",
-  strategyMap:{ phases:[
+  strategyMap:{ northStar:"", pillars:[], audience:"", phases:[
     { id:"p1", name:"Foundation", description:"Establish your voice, launch core content, build initial audience.", status:"active" },
     { id:"p2", name:"Authority", description:"Secure marquee placements, grow audience to authority-level.", status:"upcoming" },
     { id:"p3", name:"Influence", description:"Become the definitive voice in your space.", status:"future" },
@@ -289,7 +294,11 @@ const DEFAULT_CLIENTS = [
       { id:"q2",query:"Executive presence thought leaders",appears:false,platforms:[],notes:"Not yet appearing. Target by Q3." },
       { id:"q3",query:"Best LinkedIn voices for executives",appears:true,platforms:["Perplexity"],notes:"Mentioned in Perplexity when asked about executive LinkedIn." },
     ],suggestions:["Publish 2 more HBR pieces to increase citation likelihood","Get quoted in at least 3 major tech publications this quarter","Increase podcast appearances — AI models surface frequent speakers"] },
-    strategyMap:{ goals:[
+    strategyMap:{ northStar:"I want to be the defining voice for executives who believe that how you lead is inseparable from who you are.", audience:"Senior executives and emerging leaders at growth-stage companies who want to lead with both authority and humanity.", pillars:[
+      { id:"pi1",name:"Executive Leadership",description:"The philosophy and practice of leading at the top.",color:"#c9a84c" },
+      { id:"pi2",name:"Women in Tech",description:"Candid takes on gender, power, and belonging in the industry.",color:"#9abacf" },
+      { id:"pi3",name:"Strategic Communication",description:"How the best leaders use language as a leadership tool.",color:"#82d082" },
+    ], goals:[
       { id:"g1",name:"3 Tier-1 Publications",period:"90day",progress:100,trajectory:"ahead" },
       { id:"g2",name:"LinkedIn: 15K Followers",period:"90day",progress:78,trajectory:"ahead" },
       { id:"g3",name:"Podcast Appearances: 5",period:"6month",progress:40,trajectory:"on-track" },
@@ -466,10 +475,10 @@ function GoldRule({ my=20 }) { return <div style={{ height:1,background:`linear-
 
 function SectionHeading({ children, action, sub }) {
   return (
-    <div style={{ display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:22 }}>
+    <div style={{ display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:26 }}>
       <div>
-        <h2 style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontWeight:400,fontSize:24,color:C.goldL,letterSpacing:"0.01em" }}>{children}</h2>
-        {sub && <div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted,marginTop:4 }}>{sub}</div>}
+        <h2 style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontWeight:400,fontSize:32,color:C.goldL,letterSpacing:"0.01em" }}>{children}</h2>
+        {sub && <div style={{ fontFamily:"'Lato',sans-serif",fontSize:14,color:C.muted,marginTop:5 }}>{sub}</div>}
       </div>
       {action && <div style={{ flexShrink:0,marginTop:4 }}>{action}</div>}
     </div>
@@ -479,32 +488,37 @@ function SectionHeading({ children, action, sub }) {
 function StatusBadge({ status }) {
   const map = { Published:{bg:"rgba(201,168,76,0.15)",c:C.gold},"In Review":{bg:"rgba(226,196,122,0.1)",c:"#d4b860"},"In Progress":{bg:"rgba(255,255,255,0.07)",c:"rgba(255,255,255,0.65)"},Complete:{bg:"rgba(100,180,100,0.12)",c:"#82d082"},"Not Started":{bg:"rgba(255,255,255,0.05)",c:"rgba(255,255,255,0.45)"},Final:{bg:"rgba(201,168,76,0.15)",c:C.gold},Revision:{bg:"rgba(226,164,90,0.12)",c:"#c99a55"},Draft:{bg:"rgba(140,160,200,0.1)",c:"#8aa0c8"},Outline:{bg:"rgba(255,255,255,0.05)",c:"rgba(255,255,255,0.5)"},"Pending Approval":{bg:"rgba(180,150,80,0.1)",c:"#c9a84c"},Approved:{bg:"rgba(100,180,100,0.12)",c:"#82d082"},"Revision Requested":{bg:"rgba(200,100,80,0.12)",c:"#d88860"} };
   const s = map[status]||{bg:"rgba(255,255,255,0.06)",c:C.dim};
-  return <span style={{ display:"inline-block",background:s.bg,color:s.c,fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.13em",textTransform:"uppercase",padding:"3px 8px" }}>{status}</span>;
+  return <span style={{ display:"inline-block",background:s.bg,color:s.c,fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",padding:"4px 9px" }}>{status}</span>;
 }
 
 function TierChip({ tier }) {
   const c = TIER_COLORS[tier]||C.gold;
-  return <span style={{ background:`${c}18`,color:c,border:`1px solid ${c}40`,fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.13em",textTransform:"uppercase",padding:"3px 8px" }}>{TIER_LABELS[tier]||tier}</span>;
+  return <span style={{ background:`${c}18`,color:c,border:`1px solid ${c}40`,fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.13em",textTransform:"uppercase",padding:"3px 9px" }}>{TIER_LABELS[tier]||tier}</span>;
 }
 
 function Stat({ label, value, sub }) {
   return (
-    <div style={{ flex:1,minWidth:90 }}>
-      <div style={{ fontFamily:"'Playfair Display',serif",fontSize:30,fontWeight:600,color:C.gold,lineHeight:1 }}>{value}</div>
-      <div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.muted,marginTop:5 }}>{label}</div>
+    <div style={{ flex:1,minWidth:100 }}>
+      <div style={{ fontFamily:"'Playfair Display',serif",fontSize:34,fontWeight:600,color:C.gold,lineHeight:1 }}>{value}</div>
+      <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.muted,marginTop:6 }}>{label}</div>
       {sub && <div style={{ marginTop:3 }}>{sub}</div>}
     </div>
   );
 }
 
-function ProgressBar({ value, trajectory }) {
+function ProgressBar({ value, trajectory, animate }) {
   const tc = trajectory==="needs-attention"?"#c97a4a":trajectory==="ahead"?"#e2c47a":C.gold;
+  const [width, setWidth] = useState(animate ? 0 : Math.min(100,value));
+  useEffect(() => {
+    if (animate) { const t = setTimeout(() => setWidth(Math.min(100,value)), 80); return () => clearTimeout(t); }
+    else setWidth(Math.min(100,value));
+  }, [value, animate]);
   return (
     <div style={{ display:"flex",alignItems:"center",gap:10 }}>
-      <div style={{ flex:1,height:3,background:"rgba(201,168,76,0.1)",borderRadius:2,overflow:"hidden" }}>
-        <div style={{ height:"100%",width:`${Math.min(100,value)}%`,background:`linear-gradient(90deg,${tc}88,${tc})`,borderRadius:2,transition:"width 0.8s cubic-bezier(0.16,1,0.3,1)" }} />
+      <div style={{ flex:1,height:4,background:"rgba(201,168,76,0.1)",borderRadius:2,overflow:"hidden" }}>
+        <div style={{ height:"100%",width:`${width}%`,background:`linear-gradient(90deg,${tc}88,${tc})`,borderRadius:2,transition:"width 1s cubic-bezier(0.16,1,0.3,1)" }} />
       </div>
-      <span style={{ fontFamily:"'Playfair Display',serif",fontSize:12,color:tc,minWidth:32,textAlign:"right" }}>{value}%</span>
+      <span style={{ fontFamily:"'Playfair Display',serif",fontSize:13,color:tc,minWidth:34,textAlign:"right" }}>{value}%</span>
     </div>
   );
 }
@@ -512,7 +526,7 @@ function ProgressBar({ value, trajectory }) {
 function TrajectoryTag({ trajectory }) {
   const map = { "on-track":{label:"On Track",c:"#7ab47a"},ahead:{label:"Ahead",c:C.goldL},"needs-attention":{label:"Needs Attention",c:"#c97a4a"} };
   const t = map[trajectory]||{label:trajectory,c:C.dim};
-  return <span style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.11em",textTransform:"uppercase",color:t.c }}>● {t.label}</span>;
+  return <span style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.11em",textTransform:"uppercase",color:t.c }}>● {t.label}</span>;
 }
 
 function Modal({ title, onClose, children, wide }) {
@@ -520,7 +534,7 @@ function Modal({ title, onClose, children, wide }) {
     <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
       <div className="modal-box" style={{ maxWidth:wide?720:520 }}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:26 }}>
-          <h3 style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:21,color:C.goldL,fontWeight:400 }}>{title}</h3>
+          <h3 style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:24,color:C.goldL,fontWeight:400 }}>{title}</h3>
           <button onClick={onClose} style={{ background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:18,lineHeight:1,padding:"0 0 0 14px" }}>✕</button>
         </div>
         {children}
@@ -531,9 +545,9 @@ function Modal({ title, onClose, children, wide }) {
 
 function FormRow({ label, children, hint }) {
   return (
-    <div style={{ marginBottom:18 }}>
-      <div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.muted,marginBottom:7 }}>{label}</div>
-      {hint && <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:"rgba(255,255,255,0.4)",marginBottom:6,fontStyle:"italic" }}>{hint}</div>}
+    <div style={{ marginBottom:20 }}>
+      <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.muted,marginBottom:8 }}>{label}</div>
+      {hint && <div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:"rgba(255,255,255,0.4)",marginBottom:7,fontStyle:"italic" }}>{hint}</div>}
       {children}
     </div>
   );
@@ -543,13 +557,13 @@ function EmptyState({ message, icon }) {
   return (
     <div style={{ textAlign:"center",padding:"52px 24px" }}>
       {icon && <div style={{ fontSize:28,marginBottom:12,opacity:0.3 }}>{icon}</div>}
-      <div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:17,color:C.muted,opacity:0.8 }}>{message}</div>
+      <div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:19,color:C.muted,opacity:0.8 }}>{message}</div>
     </div>
   );
 }
 
 function Label({ children, small }) {
-  return <div style={{ fontFamily:"'Lato',sans-serif",fontSize:small?9:10,fontWeight:700,letterSpacing:"0.15em",textTransform:"uppercase",color:C.muted,marginBottom:10 }}>{children}</div>;
+  return <div style={{ fontFamily:"'Lato',sans-serif",fontSize:small?10:11,fontWeight:700,letterSpacing:"0.15em",textTransform:"uppercase",color:C.muted,marginBottom:11 }}>{children}</div>;
 }
 
 function TagInput({ tags, onChange, placeholder, avoid }) {
@@ -849,117 +863,154 @@ function HomeView({ client, session, onUpdate, newSince, onNavigate }) {
   const revCh=chapters.filter(c=>c.status==="Revision").length;
   const draftCh=chapters.filter(c=>c.status==="Draft").length;
   const pct=totalCh>0?Math.round(((finalCh+revCh*0.7+draftCh*0.3)/totalCh)*100):0;
-  const daysSinceSession=client.lastSessionDate?Math.floor((new Date()-new Date(client.lastSessionDate+"T12:00:00"))/(1000*60*60*24)):null;
+
+  // Next active milestone
+  const nextMilestone=(client.milestones||[]).find(m=>m.status==="In Progress")||(client.milestones||[]).find(m=>m.status==="Not Started");
+  const lastWin=[...(client.milestones||[])].filter(m=>m.status==="Complete").sort((a,b)=>new Date(b.completionDate)-new Date(a.completionDate))[0];
+
+  // Published this month
+  const now=new Date();
+  const thisMonthPublished=client.contentCalendar.filter(i=>i.status==="Published"&&i.scheduledDate&&new Date(i.scheduledDate).getMonth()===now.getMonth()&&new Date(i.scheduledDate).getFullYear()===now.getFullYear()).length;
+
+  // Active pipeline phase for manuscript
+  const activePipelinePhase = manuscript ? (() => {
+    const pip = client.productionPipeline||[];
+    const inProg = pip.find(b=>b.status==="In Progress");
+    if (inProg) return inProg.title;
+    const notStarted = pip.find(b=>b.status==="Not Started");
+    return notStarted?.title||null;
+  })() : null;
 
   return (
     <div className="ks-up">
-      {/* Welcome message */}
+
+      {/* ── Welcome note — always at top, no box, just type ── */}
       {client.welcomeMessage&&(
-        <div style={{ padding:"28px 32px",background:`linear-gradient(135deg,rgba(201,168,76,0.07),rgba(201,168,76,0.03))`,border:`1px solid rgba(201,168,76,0.2)`,marginBottom:32,position:"relative" }}>
-          <div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontWeight:300,fontSize:20,color:C.dim,lineHeight:1.8,marginBottom:14 }}>"{client.welcomeMessage}"</div>
-          <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.gold }}>— Mikaela</div>
-        </div>
-      )}
-      {/* Since last visit */}
-      {hasNewItems&&(
-        <div style={{ display:"flex",gap:10,alignItems:"center",padding:"12px 18px",background:"rgba(130,208,130,0.05)",border:"1px solid rgba(130,208,130,0.2)",marginBottom:28,flexWrap:"wrap" }}>
-          <span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:"#82d082" }}>Since your last visit —</span>
-          {newSince.content>0&&<span style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.dim }}>{newSince.content} new content piece{newSince.content>1?"s":""}</span>}
-          {newSince.docs>0&&<span style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.dim }}>{newSince.docs} new document{newSince.docs>1?"s":""}</span>}
-          {newSince.messages>0&&<span style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.dim }}>{newSince.messages} new message{newSince.messages>1?"s":""}</span>}
-        </div>
-      )}
-      {/* Action items */}
-      {(pending>0||unread>0)&&(
-        <div style={{ marginBottom:32 }}>
-          <Label>Action Required</Label>
-          <div style={{ display:"flex",gap:10,flexWrap:"wrap" }}>
-            {pending>0&&<button onClick={()=>onNavigate("content")} style={{ display:"flex",alignItems:"center",gap:10,padding:"14px 20px",background:"rgba(201,168,76,0.08)",border:`1px solid rgba(201,168,76,0.25)`,cursor:"pointer",flex:1,minWidth:180,textAlign:"left" }}>
-              <span style={{ fontFamily:"'Playfair Display',serif",fontSize:26,color:C.gold,lineHeight:1 }}>{pending}</span>
-              <div><div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",color:C.gold }}>Awaiting Approval</div><div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,marginTop:2 }}>Review content →</div></div>
-            </button>}
-            {unread>0&&<button onClick={()=>onNavigate("messages")} style={{ display:"flex",alignItems:"center",gap:10,padding:"14px 20px",background:"rgba(130,208,130,0.06)",border:"1px solid rgba(130,208,130,0.2)",cursor:"pointer",flex:1,minWidth:180,textAlign:"left" }}>
-              <span style={{ fontFamily:"'Playfair Display',serif",fontSize:26,color:"#82d082",lineHeight:1 }}>{unread}</span>
-              <div><div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",color:"#82d082" }}>New Message{unread>1?"s":""}</div><div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,marginTop:2 }}>From Mikaela →</div></div>
-            </button>}
+        <div style={{ marginBottom:44 }}>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontWeight:300,fontSize:26,color:C.dim,lineHeight:1.85 }}>
+            {client.welcomeMessage}
           </div>
+          <div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,fontWeight:700,letterSpacing:"0.2em",textTransform:"uppercase",color:C.gold,marginTop:16 }}>— Mikaela</div>
         </div>
       )}
 
-      {/* MANUSCRIPT: Story Overview Block */}
-      {manuscript&&(client.bookTitle||client.bookLogline||client.manuscriptNotes)&&(
-        <div style={{ marginBottom:32 }}>
-          <div style={{ padding:"24px 28px",background:`linear-gradient(135deg,rgba(122,138,175,0.07),rgba(122,138,175,0.03))`,border:`1px solid rgba(122,138,175,0.2)` }}>
-            {client.bookTitle&&<div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontWeight:400,fontSize:26,color:C.white,marginBottom:client.bookSubtitle?2:10,letterSpacing:"0.02em" }}>{client.bookTitle}</div>}
-            {client.bookSubtitle&&<div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:16,color:C.muted,marginBottom:10 }}>{client.bookSubtitle}</div>}
-            {client.bookGenre&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:"rgba(122,154,175,0.8)",marginBottom:10 }}>{client.bookGenre}</div>}
-            {client.bookLogline&&<div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:16,color:C.dim,lineHeight:1.7,marginBottom:client.manuscriptNotes?14:0 }}>{client.bookLogline}</div>}
-            {client.manuscriptNotes&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted,lineHeight:1.65,paddingTop:client.bookLogline?12:0,borderTop:client.bookLogline?`1px solid rgba(255,255,255,0.06)`:"none" }}>From Mikaela: {client.manuscriptNotes}</div>}
+      {/* ── MANUSCRIPT: The Book Block ── */}
+      {manuscript&&(client.bookTitle||client.bookLogline)&&(
+        <div style={{ marginBottom:36 }}>
+          <div style={{ padding:"28px 32px",background:`linear-gradient(135deg,rgba(122,138,175,0.09),rgba(122,138,175,0.03))`,border:`1px solid rgba(122,138,175,0.25)` }}>
+            {client.bookTitle&&<div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontWeight:400,fontSize:38,color:C.white,letterSpacing:"0.01em",lineHeight:1.2,marginBottom:client.bookSubtitle?4:12 }}>{client.bookTitle}</div>}
+            {client.bookSubtitle&&<div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:20,color:C.muted,marginBottom:12,fontStyle:"italic" }}>{client.bookSubtitle}</div>}
+            {client.bookGenre&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.16em",textTransform:"uppercase",color:"rgba(122,154,175,0.8)",marginBottom:14 }}>{client.bookGenre}</div>}
+            {client.bookLogline&&<div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:19,color:C.dim,lineHeight:1.75,marginBottom:client.manuscriptNotes?16:0 }}>{client.bookLogline}</div>}
+            {client.manuscriptNotes&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:14,color:C.muted,lineHeight:1.7,paddingTop:client.bookLogline?14:0,borderTop:client.bookLogline?`1px solid rgba(255,255,255,0.07)`:"none",fontStyle:"italic" }}>"{client.manuscriptNotes}"</div>}
           </div>
-        </div>
-      )}
-
-      {/* MANUSCRIPT: Project Stats Block */}
-      {manuscript&&totalCh>0&&(
-        <div style={{ marginBottom:32 }}>
-          <Label>Project Stats</Label>
-          <div style={{ padding:"22px 26px",background:C.surface,border:`1px solid ${C.goldBorder}` }}>
-            <div style={{ display:"flex",gap:24,flexWrap:"wrap",marginBottom:18 }}>
-              <Stat label="Chapters Done" value={finalCh}/>
-              <Stat label="Total Chapters" value={totalCh}/>
-              <Stat label="Complete" value={`${pct}%`}/>
-              {client.estimatedCompletion&&<Stat label="Est. Finish" value={client.estimatedCompletion}/>}
-              {daysSinceSession!==null&&<Stat label="Days Since Session" value={daysSinceSession===0?"Today":daysSinceSession}/>}
-            </div>
-            <ProgressBar value={pct} trajectory={pct>60?"ahead":"on-track"}/>
-            {client.manuscriptNotes&&<div style={{ marginTop:16,fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:16,color:C.dim,lineHeight:1.7,borderTop:`1px solid rgba(255,255,255,0.06)`,paddingTop:14 }}>"{client.manuscriptNotes}"</div>}
-          </div>
-        </div>
-      )}
-
-      {/* Next meeting — suppressed in async mode */}
-      {nextMeeting&&!client.asyncMode&&(
-        <div style={{ marginBottom:32 }}>
-          <Label>Next Meeting</Label>
-          <div onClick={()=>onNavigate("calendar")} style={{ padding:"16px 20px",background:C.surface,border:`1px solid ${C.goldBorder}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between",gap:16 }}>
-            <div>
-              <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:19,color:C.text,marginBottom:4 }}>{nextMeeting.title}</div>
-              <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted }}>{fmtDate(nextMeeting.date)} · {nextMeeting.time}</div>
-              {nextMeeting.agenda&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.dim,marginTop:5 }}>Agenda: {nextMeeting.agenda.split("·")[0].trim()}{nextMeeting.agenda.includes("·")?" …":""}</div>}
-            </div>
-            <span style={{ color:C.gold,fontSize:20 }}>◷</span>
-          </div>
-        </div>
-      )}
-      {/* Async mode notice */}
-      {client.asyncMode&&(
-        <div style={{ marginBottom:28,padding:"14px 18px",background:"rgba(201,168,76,0.04)",border:`1px solid rgba(201,168,76,0.18)`,display:"flex",alignItems:"center",gap:12 }}>
-          <span style={{ color:C.gold,fontSize:14 }}>◉</span>
-          <div>
-            <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",color:C.gold,marginBottom:3 }}>Async Mode</div>
-            <div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted }}>Mikaela will reach out with feedback and updates via messages. <button onClick={()=>onNavigate("preferences")} style={{ background:"none",border:"none",color:C.gold,cursor:"pointer",fontFamily:"'Lato',sans-serif",fontSize:12,padding:0,textDecoration:"underline" }}>Change in Preferences →</button></div>
-          </div>
-        </div>
-      )}
-
-      <GoldRule/>
-      {/* Recent wins — branding tiers only */}
-      {recentWins.length>0&&!manuscript&&(
-        <div style={{ marginTop:28 }}>
-          <Label>Recent Wins</Label>
-          {recentWins.map(p=>(
-            <div key={p.id} style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 0",borderBottom:`1px solid rgba(255,255,255,0.05)` }}>
-              <div>
-                <span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,color:C.gold,marginRight:10 }}>{p.outlet}</span>
-                <span style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.dim }}>{p.title}</span>
+          {/* Progress number */}
+          {totalCh>0&&(
+            <div style={{ display:"flex",alignItems:"center",gap:24,padding:"22px 32px",background:"rgba(255,255,255,0.02)",border:`1px solid ${C.goldBorder}`,borderTop:"none" }}>
+              <div style={{ textAlign:"center" }}>
+                <div style={{ fontFamily:"'Playfair Display',serif",fontSize:52,fontWeight:700,color:C.gold,lineHeight:1 }}>{pct}%</div>
+                <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,letterSpacing:"0.14em",textTransform:"uppercase",color:C.muted,marginTop:5 }}>Complete</div>
               </div>
-              <span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,whiteSpace:"nowrap",marginLeft:12 }}>{fmtDate(p.date)}</span>
+              <div style={{ flex:1 }}>
+                <ProgressBar value={pct} trajectory={pct>60?"ahead":"on-track"} animate={true}/>
+                <div style={{ display:"flex",gap:20,marginTop:10,flexWrap:"wrap" }}>
+                  <span style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.dim }}>Chapters final: <strong style={{ color:C.gold }}>{finalCh}</strong> of {totalCh}</span>
+                  {client.estimatedCompletion&&<span style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.dim }}>Est. completion: <strong style={{ color:C.text }}>{client.estimatedCompletion}</strong></span>}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Action items — only if there are any ── */}
+      {(pending>0||unread>0)&&(
+        <div style={{ marginBottom:36 }}>
+          <div style={{ display:"flex",gap:12,flexWrap:"wrap" }}>
+            {pending>0&&<button onClick={()=>onNavigate("content")} style={{ display:"flex",alignItems:"center",gap:14,padding:"18px 24px",background:"rgba(201,168,76,0.08)",border:`2px solid rgba(201,168,76,0.3)`,cursor:"pointer",flex:1,minWidth:200,textAlign:"left",transition:"border-color 0.2s" }}
+              onMouseEnter={e=>e.currentTarget.style.borderColor="rgba(201,168,76,0.6)"}
+              onMouseLeave={e=>e.currentTarget.style.borderColor="rgba(201,168,76,0.3)"}>
+              <span style={{ fontFamily:"'Playfair Display',serif",fontSize:38,color:C.gold,lineHeight:1 }}>{pending}</span>
+              <div>
+                <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:C.gold }}>Ready for your eyes</div>
+                <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.muted,marginTop:3 }}>{pending === 1 ? "1 piece waiting on your review" : `${pending} pieces waiting on your review`} →</div>
+              </div>
+            </button>}
+            {unread>0&&<button onClick={()=>onNavigate("messages")} style={{ display:"flex",alignItems:"center",gap:14,padding:"18px 24px",background:"rgba(130,208,130,0.06)",border:"2px solid rgba(130,208,130,0.25)",cursor:"pointer",flex:1,minWidth:200,textAlign:"left",transition:"border-color 0.2s" }}
+              onMouseEnter={e=>e.currentTarget.style.borderColor="rgba(130,208,130,0.55)"}
+              onMouseLeave={e=>e.currentTarget.style.borderColor="rgba(130,208,130,0.25)"}>
+              <span style={{ fontFamily:"'Playfair Display',serif",fontSize:38,color:"#82d082",lineHeight:1 }}>{unread}</span>
+              <div>
+                <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:"#82d082" }}>New message{unread>1?"s":""} from Mikaela</div>
+                <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.muted,marginTop:3 }}>Open messages →</div>
+              </div>
+            </button>}
+          </div>
+        </div>
+      )}
+
+      {/* ── What's next: one milestone card ── */}
+      {(nextMilestone||activePipelinePhase)&&(
+        <div style={{ marginBottom:36 }}>
+          <Label>What's Next</Label>
+          <div onClick={()=>onNavigate(manuscript?"pipeline":"milestones")} style={{ padding:"20px 24px",background:C.surface,border:`1px solid ${C.goldBorder}`,cursor:"pointer",transition:"border-color 0.2s" }}
+            onMouseEnter={e=>e.currentTarget.style.borderColor=C.gold}
+            onMouseLeave={e=>e.currentTarget.style.borderColor=C.goldBorder}>
+            <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",gap:12 }}>
+              <div>
+                <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:22,color:C.text,marginBottom:4 }}>{manuscript?activePipelinePhase:nextMilestone?.name}</div>
+                {!manuscript&&nextMilestone?.completionDate&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.muted }}>Target: {fmtDate(nextMilestone.completionDate)}</div>}
+                {!manuscript&&<StatusBadge status={nextMilestone?.status}/>}
+              </div>
+              <span style={{ color:C.gold,fontSize:22,flexShrink:0 }}>→</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── BRANDING: Streak / content this month ── */}
+      {!manuscript&&thisMonthPublished>0&&(
+        <div style={{ marginBottom:36,padding:"16px 22px",background:"rgba(201,168,76,0.05)",border:`1px solid rgba(201,168,76,0.15)`,display:"flex",alignItems:"center",gap:14 }}>
+          <span style={{ fontFamily:"'Playfair Display',serif",fontSize:38,color:C.gold,lineHeight:1 }}>{thisMonthPublished}</span>
+          <div>
+            <div style={{ fontFamily:"'Lato',sans-serif",fontSize:14,fontWeight:700,letterSpacing:"0.08em",color:C.text }}>piece{thisMonthPublished!==1?"s":""} published this month</div>
+            <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.muted,marginTop:3 }}>Momentum looks good. Keep going.</div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Recent wins — branding ── */}
+      {recentWins.length>0&&!manuscript&&(
+        <div style={{ marginBottom:36 }}>
+          <Label>Recent Wins</Label>
+          {recentWins.map((p,i)=>(
+            <div key={p.id} style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 0",borderBottom:`1px solid rgba(255,255,255,0.05)`,animationDelay:`${i*0.05}s` }}>
+              <div>
+                <span style={{ fontFamily:"'Lato',sans-serif",fontSize:14,fontWeight:700,color:C.gold,marginRight:12 }}>{p.outlet}</span>
+                <span style={{ fontFamily:"'Lato',sans-serif",fontSize:15,color:C.dim }}>{p.title}</span>
+              </div>
+              {p.link?<a href={p.link} target="_blank" rel="noreferrer" style={{ color:C.gold,fontSize:13,fontFamily:"'Lato',sans-serif",whiteSpace:"nowrap",marginLeft:12 }}>View →</a>:<span style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.muted,whiteSpace:"nowrap",marginLeft:12 }}>{fmtDate(p.date)}</span>}
             </div>
           ))}
         </div>
       )}
-      {!client.welcomeMessage&&!nextMeeting&&recentWins.length===0&&pending===0&&(
-        <EmptyState message="Your portal home will fill in as your engagement gets underway." icon="◈"/>
+
+      {/* ── MANUSCRIPT: last win ── */}
+      {manuscript&&lastWin&&(
+        <div style={{ marginBottom:36 }}>
+          <Label>Most Recent Milestone</Label>
+          <div style={{ display:"flex",alignItems:"center",gap:12,padding:"16px 20px",background:"rgba(201,168,76,0.05)",border:`1px solid ${C.goldBorder}` }}>
+            <span style={{ color:C.gold,fontSize:20 }}>◆</span>
+            <div>
+              <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:20,color:C.text }}>{lastWin.name}</div>
+              {lastWin.completionDate&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.muted,marginTop:3 }}>Completed {fmtDate(lastWin.completionDate)}</div>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!client.welcomeMessage&&pending===0&&recentWins.length===0&&!nextMilestone&&(
+        <EmptyState message="Nothing here yet — check back after our next session." icon="◈"/>
       )}
     </div>
   );
@@ -1174,9 +1225,9 @@ function PerformanceView({ client }) {
 
   return (
     <div className="ks-up">
-      <SectionHeading>Performance</SectionHeading>
+      <SectionHeading sub="A pulse check on where things stand this month">Your Momentum</SectionHeading>
       {r.period&&<>
-        <div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.16em",textTransform:"uppercase",color:C.muted,marginBottom:18 }}>{r.period} Report</div>
+        <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.muted,marginBottom:18 }}>{r.period}</div>
         <div style={{ display:"flex",gap:24,flexWrap:"wrap",marginBottom:24 }}>
           <Stat label="Engagement" value={r.engagement||"—"}/>
           <Stat label="Total Reach" value={r.reach||"—"}/>
@@ -1265,10 +1316,10 @@ function InThePressView({ client }) {
           <thead><tr><th>Outlet</th><th>Title</th><th>Date</th><th></th></tr></thead>
           <tbody>{sorted.map(p=>(
             <tr key={p.id}>
-              <td style={{ color:C.gold,fontWeight:700,fontSize:12,whiteSpace:"nowrap" }}>{p.outlet}</td>
+              <td style={{ color:C.gold,fontWeight:700,fontSize:14,whiteSpace:"nowrap" }}>{p.outlet}</td>
               <td>{p.title}</td>
-              <td style={{ color:C.muted,fontSize:12,whiteSpace:"nowrap" }}>{fmtDate(p.date)}</td>
-              <td>{p.link?<a href={p.link} target="_blank" rel="noreferrer" style={{ color:C.gold,fontSize:12 }}>View →</a>:"—"}</td>
+              <td style={{ color:C.muted,fontSize:13,whiteSpace:"nowrap" }}>{fmtDate(p.date)}</td>
+              <td>{p.link?<a href={p.link} target="_blank" rel="noreferrer" style={{ color:C.gold,fontSize:13 }}>View →</a>:"—"}</td>
             </tr>
           ))}</tbody>
         </table>
@@ -1278,7 +1329,229 @@ function InThePressView({ client }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// MILESTONES
+// RESULTS VIEW (merges Performance + LinkedIn + Press)
+// ─────────────────────────────────────────────────────────────
+function ResultsView({ client }) {
+  const r=client.performanceReport;
+  const stats=[...(client.linkedInStats||[])].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const latest=stats[stats.length-1];
+  const prev=stats[stats.length-2];
+  const delta=key=>{if(!latest||!prev)return null;const d=latest[key]-prev[key];return d>0?`+${d.toLocaleString()}`:d.toString();};
+  const sorted=[...client.publicationLog].sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  const monthlyData = useMemo(() => {
+    const map = {};
+    (client.contentCalendar||[]).filter(i=>i.status==="Published"&&i.scheduledDate).forEach(i=>{
+      const d=new Date(i.scheduledDate+"T12:00:00");
+      const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+      map[key]=(map[key]||0)+1;
+    });
+    const result=[];
+    const now=new Date();
+    for(let i=5;i>=0;i--){
+      const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+      const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+      result.push({ key, label:d.toLocaleDateString("en-US",{month:"short"}), count:map[key]||0 });
+    }
+    return result;
+  },[client.contentCalendar]);
+  const maxCount = Math.max(...monthlyData.map(m=>m.count),1);
+
+  return (
+    <div className="ks-up">
+      <SectionHeading sub="Every number, placement, and win — all in one place">Results</SectionHeading>
+
+      {/* ── SECTION 1: Content Stats ── */}
+      <div style={{ marginBottom:36 }}>
+        <Label>Content Output</Label>
+        {r.period&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted,letterSpacing:"0.08em",marginBottom:14 }}>{r.period}</div>}
+        {r.summary&&<div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:20,fontWeight:300,color:C.dim,lineHeight:1.8,marginBottom:22 }}>" {r.summary} "</div>}
+        <div style={{ display:"flex",gap:28,flexWrap:"wrap",marginBottom:22 }}>
+          {r.engagement&&<Stat label="Engagement" value={r.engagement}/>}
+          {r.reach&&<Stat label="Total Reach" value={r.reach}/>}
+          {r.placements&&<Stat label="Placements" value={r.placements}/>}
+        </div>
+        {/* Bar graph */}
+        <div style={{ display:"flex",alignItems:"flex-end",gap:6,height:90,paddingBottom:22,position:"relative" }}>
+          {monthlyData.map((m,i)=>{
+            const h=Math.round((m.count/maxCount)*62)+4;
+            return (
+              <div key={m.key} style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:0,position:"relative" }}>
+                <div style={{ width:"100%",height:h,background:`linear-gradient(180deg,${C.goldL}66,${C.gold}99)`,borderRadius:"1px 1px 0 0",transition:"height 0.7s cubic-bezier(0.16,1,0.3,1)" }}>
+                  {m.count>0&&<div style={{ position:"absolute",top:-22,left:"50%",transform:"translateX(-50%)",fontFamily:"'Playfair Display',serif",fontSize:13,color:C.gold,whiteSpace:"nowrap" }}>{m.count}</div>}
+                </div>
+                <div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,color:C.muted,textAlign:"center",marginTop:6,letterSpacing:"0.06em" }}>{m.label}</div>
+              </div>
+            );
+          })}
+          <div style={{ position:"absolute",bottom:22,left:0,right:0,height:1,background:"rgba(201,168,76,0.1)" }}/>
+        </div>
+      </div>
+
+      <GoldRule/>
+
+      {/* ── SECTION 2: LinkedIn Numbers ── */}
+      <div style={{ marginTop:28,marginBottom:36 }}>
+        <Label>LinkedIn Numbers</Label>
+        {!latest?<EmptyState message="LinkedIn stats will appear here once updated." icon="◎"/>:<>
+          <div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted,marginBottom:18 }}>Last updated: {fmtDate(latest.date)}</div>
+          <div style={{ display:"flex",gap:20,flexWrap:"wrap",marginBottom:22 }}>
+            <Stat label="Followers" value={latest.followers?.toLocaleString()} sub={delta("followers")&&<span style={{ color:Number((delta("followers")||"0").replace("+",""))>0?"#82d082":"#c97a4a",fontSize:12,fontFamily:"'Lato',sans-serif" }}>{delta("followers")} vs last month</span>}/>
+            <Stat label="Impressions" value={latest.impressions?.toLocaleString()}/>
+            <Stat label="Profile Views" value={latest.profileViews?.toLocaleString()}/>
+            <Stat label="Engagement" value={`${latest.engagementRate}%`}/>
+          </div>
+          {latest.topPost&&<div style={{ padding:"14px 18px",background:"rgba(201,168,76,0.05)",border:`1px solid ${C.goldBorder}`,marginBottom:16 }}>
+            <Label small>Top Performing Post</Label>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:18,color:C.text }}>"{latest.topPost}"</div>
+          </div>}
+        </>}
+      </div>
+
+      <GoldRule/>
+
+      {/* ── SECTION 3: Press ── */}
+      <div style={{ marginTop:28 }}>
+        <Label>In the Press</Label>
+        {sorted.length===0?<EmptyState message="Your first placed piece will appear here." icon="◉"/>:(
+          <table className="ks-table">
+            <thead><tr><th>Outlet</th><th>Title</th><th>Date</th><th></th></tr></thead>
+            <tbody>{sorted.map(p=>(
+              <tr key={p.id}>
+                <td style={{ color:C.gold,fontWeight:700,fontSize:14 }}>{p.outlet}</td>
+                <td style={{ fontSize:15 }}>{p.title}</td>
+                <td style={{ color:C.muted,fontSize:13,whiteSpace:"nowrap" }}>{fmtDate(p.date)}</td>
+                <td>{p.link?<a href={p.link} target="_blank" rel="noreferrer" style={{ color:C.gold,fontSize:13 }}>View →</a>:"—"}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// PROGRESS VIEW (merges Milestones + Timeline)
+// ─────────────────────────────────────────────────────────────
+function ProgressView({ client, isAdmin, onUpdate }) {
+  const [draftName, setDraftName] = useState("");
+  const [showDraft, setShowDraft] = useState(false);
+  const order={ Complete:0,"In Progress":1,"Not Started":2 };
+  const sortedMs=[...client.milestones].sort((a,b)=>(order[a.status]||3)-(order[b.status]||3));
+
+  const submitDraft=()=>{
+    if(!draftName.trim()) return;
+    const m={id:uid(),name:draftName.trim(),status:"Not Started",completionDate:"",submittedByClient:true,clientDraft:false};
+    onUpdate({...client,milestones:[...client.milestones,m]});
+    setDraftName(""); setShowDraft(false);
+  };
+  const confirmMilestone=(id)=>onUpdate({...client,milestones:client.milestones.map(m=>m.id===id?{...m,submittedByClient:false}:m)});
+  const pendingSubmissions=sortedMs.filter(m=>m.submittedByClient);
+
+  // Timeline events
+  const typeCfg={ publication:{c:C.gold,label:"Publication",dot:"◉"},milestone:{c:C.goldL,label:"Milestone",dot:"◆"},"goal-hit":{c:"#82d082",label:"Goal Hit",dot:"▲"},note:{c:C.muted,label:"Note",dot:"◇"} };
+  const timelineEvents=[
+    ...client.publicationLog.map(p=>({id:"pub_"+p.id,date:p.date,type:"publication",title:`${p.outlet}: ${p.title}`,description:""})),
+    ...(client.milestones||[]).filter(m=>m.status==="Complete"&&m.completionDate).map(m=>({id:"ms_"+m.id,date:m.completionDate,type:"milestone",title:m.name,description:"Milestone achieved."})),
+    ...(client.timelineEntries||[]),
+  ].sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  return (
+    <div className="ks-up">
+      <SectionHeading sub="Where you're headed and what you've already built">Progress</SectionHeading>
+
+      {/* Upcoming milestones section */}
+      <Label>Upcoming Milestones</Label>
+
+      {isAdmin&&pendingSubmissions.length>0&&(
+        <div style={{ padding:"14px 18px",background:"rgba(201,168,76,0.07)",border:`1px solid rgba(201,168,76,0.25)`,marginBottom:24 }}>
+          <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.gold,marginBottom:8 }}>
+            {pendingSubmissions.length} Client-Submitted Milestone{pendingSubmissions.length!==1?"s":""} — Review & Confirm
+          </div>
+          {pendingSubmissions.map(m=>(
+            <div key={m.id} style={{ display:"flex",alignItems:"center",gap:10,justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid rgba(201,168,76,0.1)" }}>
+              <span style={{ fontFamily:"'Lato',sans-serif",fontSize:15,color:C.text }}>{m.name}</span>
+              <div style={{ display:"flex",gap:6 }}>
+                <button className="btn-approve" onClick={()=>confirmMilestone(m.id)}>Confirm</button>
+                <button className="btn-del" onClick={()=>onUpdate({...client,milestones:client.milestones.filter(x=>x.id!==m.id)})}>Del</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!isAdmin&&(
+        <div style={{ marginBottom:20 }}>
+          {showDraft?(
+            <div style={{ padding:"16px 20px",background:"rgba(201,168,76,0.05)",border:`1px solid rgba(201,168,76,0.18)` }}>
+              <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.muted,marginBottom:10 }}>What milestone do you want to propose to Mikaela?</div>
+              <div style={{ display:"flex",gap:8 }}>
+                <input className="ks-field" value={draftName} onChange={e=>setDraftName(e.target.value)} placeholder="e.g. First Forbes placement, 10K LinkedIn followers…" style={{ flex:1 }} onKeyDown={e=>e.key==="Enter"&&submitDraft()}/>
+                <button className="btn-gold" onClick={submitDraft} disabled={!draftName.trim()} style={{ padding:"9px 18px" }}>Submit</button>
+                <button className="btn-ghost" onClick={()=>{setShowDraft(false);setDraftName("");}}>Cancel</button>
+              </div>
+            </div>
+          ):(
+            <button className="btn-ghost" onClick={()=>setShowDraft(true)} style={{ fontSize:11 }}>+ Propose a Milestone</button>
+          )}
+        </div>
+      )}
+
+      {sortedMs.filter(m=>m.status!=="Complete"&&!(m.submittedByClient&&isAdmin)).length===0&&(
+        <EmptyState message="No upcoming milestones yet — check back after your next session." icon="◆"/>
+      )}
+      {sortedMs.filter(m=>m.status!=="Complete"&&!(m.submittedByClient&&isAdmin)).map(m=>(
+        <div key={m.id} style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"18px 0",borderBottom:`1px solid rgba(255,255,255,0.05)`,gap:16 }}>
+          <div style={{ display:"flex",alignItems:"center",gap:14,flex:1 }}>
+            <div style={{ width:10,height:10,borderRadius:"50%",background:m.status==="In Progress"?C.gold:"rgba(255,255,255,0.18)",flexShrink:0 }}/>
+            <div>
+              <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+                <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:20,color:C.text }}>{m.name}</div>
+                {m.submittedByClient&&!isAdmin&&<span style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:"rgba(201,168,76,0.6)",background:"rgba(201,168,76,0.08)",border:"1px solid rgba(201,168,76,0.2)",padding:"2px 7px" }}>Proposed</span>}
+              </div>
+              {m.completionDate&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.muted,marginTop:3 }}>Target: {fmtDate(m.completionDate)}</div>}
+            </div>
+          </div>
+          <StatusBadge status={m.status}/>
+        </div>
+      ))}
+
+      <GoldRule my={32}/>
+
+      {/* Timeline of wins */}
+      <Label>What You've Built</Label>
+      {timelineEvents.length===0?(
+        <EmptyState message="Your wins and achievements will accumulate here over time." icon="◉"/>
+      ):(
+        <div style={{ position:"relative",paddingLeft:38 }}>
+          <div className="tl-line"/>
+          {timelineEvents.map((ev,i)=>{
+            const cfg=typeCfg[ev.type]||typeCfg.note;
+            return (
+              <div key={ev.id} className="ks-up" style={{ position:"relative",marginBottom:20,animationDelay:`${i*0.04}s` }}>
+                <div className="tl-dot" style={{ background:cfg.c,left:-22 }}/>
+                <div style={{ padding:"14px 18px",background:C.surface,border:`1px solid rgba(255,255,255,0.07)`,transition:"border-color 0.18s" }}
+                  onMouseEnter={e=>e.currentTarget.style.borderColor=C.goldBorder}
+                  onMouseLeave={e=>e.currentTarget.style.borderColor="rgba(255,255,255,0.07)"}>
+                  <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:5 }}>
+                    <span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",color:cfg.c }}>{cfg.dot} {cfg.label}</span>
+                    <span style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted }}>{fmtDate(ev.date)}</span>
+                  </div>
+                  <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:20,color:C.text }}>{ev.title}</div>
+                  {ev.description&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.dim,marginTop:4,fontStyle:"italic" }}>{ev.description}</div>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// MILESTONES (kept for admin editor compatibility)
 // ─────────────────────────────────────────────────────────────
 function MilestonesView({ client, isAdmin, onUpdate }) {
   const [draftName, setDraftName] = useState("");
@@ -1291,6 +1564,7 @@ function MilestonesView({ client, isAdmin, onUpdate }) {
     const m={id:uid(),name:draftName.trim(),status:"Not Started",completionDate:"",submittedByClient:true,clientDraft:false};
     onUpdate({...client,milestones:[...client.milestones,m]});
     setDraftName(""); setShowDraft(false);
+
   };
 
   const confirmMilestone=(id)=>onUpdate({...client,milestones:client.milestones.map(m=>m.id===id?{...m,submittedByClient:false}:m)});
@@ -1359,122 +1633,143 @@ function MilestonesView({ client, isAdmin, onUpdate }) {
 // ─────────────────────────────────────────────────────────────
 // STRATEGY MAP (replaces Brand Roadmap)
 // ─────────────────────────────────────────────────────────────
-function StrategyMapView({ client }) {
-  const sm=client.strategyMap||{phases:[],goals:[]};
-  const phases=sm.phases||[];
+function StrategyMapView({ client, isAdmin, onUpdate }) {
+  const sm=client.strategyMap||{northStar:"",pillars:[],audience:"",phases:[],goals:[]};
   const goals=sm.goals||[];
+  const pillars=sm.pillars||[];
+  const phases=sm.phases||[];
 
-  const phaseStatus={
-    complete:{ c:C.gold, label:"Complete", dot:"●" },
-    active:{ c:"#82d082", label:"Active", dot:"◉" },
-    upcoming:{ c:C.muted, label:"Upcoming", dot:"○" },
-    future:{ c:"rgba(255,255,255,0.2)", label:"Future", dot:"○" },
+  const [dragPillarIdx, setDragPillarIdx] = useState(null);
+  const [dragOverPillarIdx, setDragOverPillarIdx] = useState(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setMounted(true), 100); return () => clearTimeout(t); }, []);
+
+  const reorderPillars = () => {
+    if (dragPillarIdx===null||dragOverPillarIdx===null||dragPillarIdx===dragOverPillarIdx) {
+      setDragPillarIdx(null); setDragOverPillarIdx(null); return;
+    }
+    const arr=[...pillars];
+    const [moved]=arr.splice(dragPillarIdx,1);
+    arr.splice(dragOverPillarIdx,0,moved);
+    onUpdate({...client,strategyMap:{...sm,pillars:arr}});
+    setDragPillarIdx(null); setDragOverPillarIdx(null);
   };
 
-  // Group goals by phase
-  const phaseGoals = phases.reduce((acc,p)=>{
-    acc[p.id]=(goals||[]).filter(g=>g.phase===p.id);
-    return acc;
-  },{});
-  const unassignedGoals=(goals||[]).filter(g=>!g.phase||!phases.find(p=>p.id===g.phase));
-
-  const pct=(g)=>{
-    if(!g.target||g.target===0) return 0;
-    return Math.min(100,Math.round((g.current/g.target)*100));
-  };
+  const pct=(g)=>{ if(!g.target||g.target===0) return 0; return Math.min(100,Math.round((g.current/g.target)*100)); };
   const fmtNum=(n)=>{ if(!n&&n!==0) return "—"; return Number(n).toLocaleString(); };
+  const phaseStatusCfg={
+    complete:{ c:C.gold, dot:"●", glow:"rgba(201,168,76,0.12)" },
+    active:{ c:"#82d082", dot:"◉", glow:"rgba(130,208,130,0.07)" },
+    upcoming:{ c:C.muted, dot:"○", glow:"transparent" },
+    future:{ c:"rgba(255,255,255,0.2)", dot:"○", glow:"transparent" },
+  };
+
+  const pillarColors=["#c9a84c","#9abacf","#82d082","#c99a55","#a08adf"];
 
   return (
     <div className="ks-up">
-      <SectionHeading sub="Your brand trajectory and the milestones that define it">Strategy Map</SectionHeading>
+      <SectionHeading sub="Where you're going and how you're getting there">Strategy Map</SectionHeading>
 
-      {/* Phase arc */}
-      {phases.length>0&&(
-        <div style={{ display:"flex",gap:1,marginBottom:32 }}>
-          {phases.map((phase,i)=>{
-            const cfg=phaseStatus[phase.status]||phaseStatus.future;
-            const isActive=phase.status==="active";
-            const isDone=phase.status==="complete";
-            return (
-              <div key={phase.id} style={{ flex:1,background:isActive?"rgba(130,208,130,0.05)":isDone?"rgba(201,168,76,0.05)":"rgba(255,255,255,0.02)",border:`1px solid ${isActive?"rgba(130,208,130,0.2)":isDone?C.goldBorder:"rgba(255,255,255,0.06)"}`,padding:"16px 14px",position:"relative" }}>
-                <div style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.15em",textTransform:"uppercase",color:cfg.c,marginBottom:6,display:"flex",alignItems:"center",gap:6 }}>
-                  <span>{cfg.dot}</span><span>{phase.name}</span>
-                </div>
-                <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:13,color:C.muted,lineHeight:1.5 }}>{phase.description}</div>
+      {/* ── North Star Statement ── */}
+      {(sm.northStar||isAdmin)&&(
+        <div style={{ marginBottom:36 }}>
+          {sm.northStar?(
+            <div style={{ position:"relative",paddingLeft:20,borderLeft:`3px solid ${C.gold}` }}>
+              <div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontWeight:300,fontSize:26,color:C.text,lineHeight:1.75 }}>
+                {sm.northStar}
               </div>
-            );
-          })}
+              <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.muted,marginTop:10 }}>Your North Star</div>
+            </div>
+          ):(
+            <EmptyState message="Your north star statement will appear here — one sentence that everything else points back to." icon="★"/>
+          )}
         </div>
       )}
 
-      {/* Goals */}
-      {goals.length===0?(
-        <EmptyState message="Your goals and progress will appear here." icon="▲"/>
-      ):(
-        <div>
-          {phases.map(phase=>{
-            const gs=phaseGoals[phase.id]||[];
-            if(!gs.length) return null;
-            const cfg=phaseStatus[phase.status]||phaseStatus.future;
-            return (
-              <div key={phase.id} style={{ marginBottom:32 }}>
-                <div style={{ display:"flex",alignItems:"center",gap:10,marginBottom:16,paddingBottom:10,borderBottom:`1px solid rgba(255,255,255,0.06)` }}>
-                  <span style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.16em",textTransform:"uppercase",color:cfg.c }}>{cfg.dot} {phase.name}</span>
-                </div>
-                {gs.map(g=>{
-                  const p=pct(g);
-                  const hasNums=g.target>0;
-                  return (
-                    <div key={g.id} style={{ marginBottom:20,padding:"16px 20px",background:"rgba(255,255,255,0.02)",border:`1px solid rgba(255,255,255,0.06)` }}>
-                      <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10,gap:12 }}>
-                        <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:18,color:C.text,fontWeight:400 }}>{g.label}</div>
-                        {hasNums&&<span style={{ fontFamily:"'Playfair Display',serif",fontSize:22,color:C.gold,lineHeight:1,flexShrink:0 }}>{p}%</span>}
-                      </div>
-                      {hasNums&&(
-                        <>
-                          <ProgressBar value={p} trajectory={p>=75?"ahead":p>=40?"on-track":"needs-attention"}/>
-                          <div style={{ display:"flex",justifyContent:"space-between",marginTop:8 }}>
-                            <span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted }}>You're at {fmtNum(g.current)} {g.unit}</span>
-                            <span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted }}>Target: {fmtNum(g.target)} {g.unit}{g.dueDate?` · by ${fmtDate(g.dueDate)}`:""}</span>
-                          </div>
-                        </>
-                      )}
-                      {!hasNums&&g.notes&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted,fontStyle:"italic",marginTop:6 }}>{g.notes}</div>}
-                    </div>
-                  );
-                })}
+      {/* ── Content Pillars ── */}
+      {pillars.length>0&&(
+        <div style={{ marginBottom:40 }}>
+          <Label>Content Pillars</Label>
+          <div style={{ display:"flex",gap:10,flexWrap:"wrap" }}>
+            {pillars.map((p,i)=>(
+              <div key={p.id}
+                draggable={isAdmin}
+                onDragStart={()=>setDragPillarIdx(i)}
+                onDragOver={e=>{e.preventDefault();setDragOverPillarIdx(i);}}
+                onDragLeave={()=>setDragOverPillarIdx(null)}
+                onDrop={reorderPillars}
+                style={{ flex:1,minWidth:150,padding:"18px 20px",background:`rgba(255,255,255,0.03)`,border:`1px solid ${p.color||pillarColors[i%5]}33`,borderTop:`3px solid ${p.color||pillarColors[i%5]}`,cursor:isAdmin?"grab":"default",transition:"border-color 0.2s,box-shadow 0.2s",opacity:dragPillarIdx===i?0.4:1,boxShadow:dragOverPillarIdx===i?`0 0 0 2px ${p.color||pillarColors[i%5]}55`:"none" }}>
+                <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",color:p.color||pillarColors[i%5],marginBottom:6 }}>Pillar {i+1}</div>
+                <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:20,color:C.text,marginBottom:6 }}>{p.name}</div>
+                {p.description&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.muted,lineHeight:1.55 }}>{p.description}</div>}
               </div>
-            );
-          })}
-          {unassignedGoals.length>0&&(
-            <div style={{ marginBottom:32 }}>
-              <div style={{ marginBottom:16,paddingBottom:10,borderBottom:`1px solid rgba(255,255,255,0.06)` }}>
-                <span style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.16em",textTransform:"uppercase",color:C.muted }}>General Goals</span>
-              </div>
-              {unassignedGoals.map(g=>{
-                const p=pct(g);
-                const hasNums=g.target>0;
-                return (
-                  <div key={g.id} style={{ marginBottom:20,padding:"16px 20px",background:"rgba(255,255,255,0.02)",border:`1px solid rgba(255,255,255,0.06)` }}>
-                    <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10,gap:12 }}>
-                      <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:18,color:C.text }}>{g.label}</div>
-                      {hasNums&&<span style={{ fontFamily:"'Playfair Display',serif",fontSize:22,color:C.gold,lineHeight:1,flexShrink:0 }}>{p}%</span>}
-                    </div>
-                    {hasNums&&(
-                      <>
-                        <ProgressBar value={p} trajectory={p>=75?"ahead":p>=40?"on-track":"needs-attention"}/>
-                        <div style={{ display:"flex",justifyContent:"space-between",marginTop:8 }}>
-                          <span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted }}>You're at {fmtNum(g.current)} {g.unit}</span>
-                          <span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted }}>Target: {fmtNum(g.target)} {g.unit}{g.dueDate?` · by ${fmtDate(g.dueDate)}`:""}</span>
-                        </div>
-                      </>
-                    )}
-                    {!hasNums&&g.notes&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted,fontStyle:"italic",marginTop:6 }}>{g.notes}</div>}
+            ))}
+          </div>
+          {isAdmin&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,fontStyle:"italic",marginTop:8 }}>Drag to reorder by priority</div>}
+        </div>
+      )}
+
+      {/* ── Measurable Goals ── */}
+      {goals.length>0&&(
+        <div style={{ marginBottom:40 }}>
+          <Label>Measurable Goals</Label>
+          <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:14 }}>
+            {goals.map((g,gi)=>{
+              const p=pct(g);
+              const hasNums=g.target>0;
+              const achieved=p>=100;
+              const traj=p>=75?"ahead":p>=40?"on-track":"needs-attention";
+              return (
+                <div key={g.id} style={{ padding:"20px 22px",background:achieved?"rgba(201,168,76,0.08)":"rgba(255,255,255,0.03)",border:`1px solid ${achieved?C.gold:"rgba(255,255,255,0.08)"}`,transition:"box-shadow 0.2s,border-color 0.2s",cursor:"default" }}
+                  onMouseEnter={e=>{e.currentTarget.style.boxShadow=`0 4px 20px rgba(0,0,0,0.3)`;e.currentTarget.style.transform="translateY(-2px)";}}
+                  onMouseLeave={e=>{e.currentTarget.style.boxShadow="none";e.currentTarget.style.transform="none";}}>
+                  <div style={{ display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:8,marginBottom:12 }}>
+                    <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:20,color:C.text,lineHeight:1.3 }}>{g.label||g.name}</div>
+                    {achieved?<span style={{ color:C.gold,fontSize:16,flexShrink:0 }}>✓</span>:hasNums&&<span style={{ fontFamily:"'Playfair Display',serif",fontSize:24,color:C.gold,lineHeight:1,flexShrink:0 }}>{p}%</span>}
                   </div>
-                );
-              })}
-            </div>
-          )}
+                  {hasNums&&<ProgressBar value={p} trajectory={traj} animate={mounted}/>}
+                  {hasNums&&<div style={{ display:"flex",justifyContent:"space-between",marginTop:8 }}>
+                    <span style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted }}>{fmtNum(g.current)} {g.unit}</span>
+                    <span style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted }}>of {fmtNum(g.target)}{g.dueDate?` · ${fmtDate(g.dueDate)}`:""}</span>
+                  </div>}
+                  {!hasNums&&g.notes&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.muted,fontStyle:"italic",marginTop:6 }}>{g.notes}</div>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {goals.length===0&&pillars.length===0&&!sm.northStar&&(
+        <EmptyState message="Your strategy map isn't populated yet — check back after your next session with Mikaela." icon="▲"/>
+      )}
+
+      {/* ── Phase Arc ── */}
+      {phases.length>0&&(
+        <div style={{ marginBottom:36 }}>
+          <Label>Your Journey Arc</Label>
+          <div style={{ display:"flex",gap:2 }}>
+            {phases.map((phase,i)=>{
+              const cfg=phaseStatusCfg[phase.status]||phaseStatusCfg.future;
+              return (
+                <div key={phase.id} style={{ flex:1,padding:"14px 16px",background:cfg.glow,border:`1px solid ${phase.status==="active"?"rgba(130,208,130,0.25)":phase.status==="complete"?C.goldBorder:"rgba(255,255,255,0.06)"}` }}>
+                  <div style={{ display:"flex",alignItems:"center",gap:6,marginBottom:6 }}>
+                    <span style={{ color:cfg.c,fontSize:12 }}>{cfg.dot}</span>
+                    <span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:cfg.c }}>{phase.name}</span>
+                  </div>
+                  <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.muted,lineHeight:1.55 }}>{phase.description}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Audience ── */}
+      {sm.audience&&(
+        <div style={{ padding:"18px 22px",background:"rgba(255,255,255,0.02)",border:`1px solid rgba(255,255,255,0.06)` }}>
+          <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.muted,marginBottom:8 }}>Your Audience</div>
+          <div style={{ fontFamily:"'Lato',sans-serif",fontSize:15,color:C.dim,lineHeight:1.7 }}>{sm.audience}</div>
         </div>
       )}
     </div>
@@ -1482,21 +1777,30 @@ function StrategyMapView({ client }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// AI VISIBILITY
+// SEARCH & DISCOVERY (was AI Visibility)
 // ─────────────────────────────────────────────────────────────
 function AIVisibilityView({ client }) {
   const av=client.aiVisibility||{score:0,lastUpdated:"",queries:[],suggestions:[]};
+
   const appearing=av.queries.filter(q=>q.appears).length;
   return (
     <div className="ks-up">
-      <SectionHeading sub="How often you appear when AI tools answer questions in your industry">AI Visibility Tracker</SectionHeading>
-      {av.lastUpdated&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,color:C.muted,letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:20 }}>Last updated: {fmtDate(av.lastUpdated)}</div>}
-      <div style={{ display:"flex",gap:24,flexWrap:"wrap",marginBottom:av.score?24:0 }}>
-        <Stat label="Visibility Score" value={av.score||"—"}/>
-        <Stat label="Queries Tracked" value={av.queries.length||"—"}/>
-        <Stat label="Appearing In" value={av.queries.length>0?`${appearing}/${av.queries.length}`:"—"}/>
+      <SectionHeading sub="How easy you are to find when someone searches for what you do">Search & Discovery</SectionHeading>
+      {av.lastUpdated&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted,letterSpacing:"0.08em",marginBottom:20 }}>Last checked: {fmtDate(av.lastUpdated)}</div>}
+      {/* Plain-language indicator */}
+      <div style={{ marginBottom:28,padding:"20px 24px",background:av.queries.filter(q=>q.appears).length>0?"rgba(130,208,130,0.06)":"rgba(255,255,255,0.03)",border:`1px solid ${av.queries.filter(q=>q.appears).length>0?"rgba(130,208,130,0.25)":"rgba(255,255,255,0.08)"}` }}>
+        <div style={{ display:"flex",alignItems:"center",gap:14 }}>
+          <span style={{ fontSize:28,color:av.queries.filter(q=>q.appears).length>0?"#82d082":"rgba(255,255,255,0.3)" }}>{av.queries.filter(q=>q.appears).length>0?"◉":"○"}</span>
+          <div>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:22,color:C.text,marginBottom:4 }}>
+              {av.queries.filter(q=>q.appears).length>0?`You're showing up in ${av.queries.filter(q=>q.appears).length} of ${av.queries.length} tracked searches`:"Not yet appearing in tracked searches"}
+            </div>
+            <div style={{ fontFamily:"'Lato',sans-serif",fontSize:14,color:C.muted }}>
+              {av.queries.filter(q=>q.appears).length>0?"When someone asks an AI assistant a question you should be answering, your name is coming up.":"When someone searches for what you do, you're not on the radar yet — that's what we're building toward."}
+            </div>
+          </div>
+        </div>
       </div>
-      {av.score>0&&<><div style={{ marginBottom:24 }}><ProgressBar value={av.score} trajectory={av.score>=60?"ahead":av.score>=30?"on-track":"needs-attention"}/></div><GoldRule/></>}
       {av.queries.length>0&&<>
         <Label>Tracked Queries</Label>
         {av.queries.map(q=>(
@@ -2161,100 +2465,196 @@ const pipelineStatusColor = s => s==="Complete"?C.gold:s==="In Progress"?"#82d08
 function BookPipelineView({ client, isAdmin, onUpdate }) {
   const pipeline = [...(client.productionPipeline||[])].sort((a,b)=>(a.order??999)-(b.order??999));
   const [editBlock, setEditBlock] = useState(null);
-  const [dragIdx, setDragIdx] = useState(null);
-  const [dragOverIdx, setDragOverIdx] = useState(null);
+  const [expandedPhases, setExpandedPhases] = useState({});
+
+  // Define the process phases with descriptions
+  const PROCESS_PHASES = [
+    { key:"vision", label:"Vision & Strategy", desc:"This is where the book comes into focus — what it's about, who it's for, and why it matters now." },
+    { key:"interview", label:"Interview Series", desc:"Four deep conversations. This is where we find the stories, the arguments, and the voice." },
+    { key:"writing", label:"Writing", desc:"Chapter by chapter. This is where your book starts to exist in the world." },
+    { key:"editing", label:"Editing & Formatting", desc:"Three rounds. Every sentence earns its place." },
+    { key:"publishing", label:"Publishing Path", desc:"Traditional, hybrid, or self-publish — we choose the right path and walk it together." },
+  ];
+
+  // Assign each pipeline item to a phase based on type/order
+  // Phases are inferred by order in the pipeline; first 20% = vision, next = interview, etc.
+  const total = pipeline.length;
+  const getPhaseForBlock = (block, idx) => {
+    if (block.phase) return block.phase;
+    // Auto-assign based on type
+    if (block.type==="Meeting"&&idx===0) return "vision";
+    if (block.type==="Interview") return "interview";
+    if (["Chapter Review"].includes(block.type)) return "writing";
+    if (["Cover Design","Editing"].includes(block.type)) return "editing";
+    if (["Partner Outreach","Partner Response","Literary Agent"].includes(block.type)) return "publishing";
+    // Fallback: divide evenly
+    const q = Math.floor(idx / Math.max(total/5,1));
+    return ["vision","interview","writing","editing","publishing"][Math.min(q,4)];
+  };
+
+  // Group pipeline blocks by phase
+  const phaseBlocks = PROCESS_PHASES.reduce((acc,ph)=>{
+    acc[ph.key] = pipeline.filter((b,i)=>getPhaseForBlock(b,i)===ph.key);
+    return acc;
+  },{});
+  // Blocks not assigned to any known phase go into writing
+  const assignedIds = new Set(Object.values(phaseBlocks).flat().map(b=>b.id));
+  const unassigned = pipeline.filter(b=>!assignedIds.has(b.id));
+  if (unassigned.length) phaseBlocks["writing"] = [...(phaseBlocks["writing"]||[]),...unassigned];
+
+  // Determine active phase (first phase with any In Progress or Not Started)
+  const activePhaseKey = PROCESS_PHASES.find(ph=>(phaseBlocks[ph.key]||[]).some(b=>b.status==="In Progress"))?.key
+    || PROCESS_PHASES.find(ph=>(phaseBlocks[ph.key]||[]).some(b=>b.status==="Not Started"))?.key
+    || PROCESS_PHASES[PROCESS_PHASES.length-1].key;
+
+  // Auto-open active phase on mount
+  const [initialized, setInitialized] = useState(false);
+  useEffect(()=>{
+    if (!initialized) {
+      setExpandedPhases({[activePhaseKey]:true});
+      setInitialized(true);
+    }
+  },[activePhaseKey]);
+
+  const togglePhase = key => setExpandedPhases(prev=>({...prev,[key]:!prev[key]}));
+
+  const getPhaseStatus = (key) => {
+    const blocks = phaseBlocks[key]||[];
+    if (!blocks.length) return "empty";
+    if (blocks.every(b=>b.status==="Complete")) return "complete";
+    if (blocks.some(b=>b.status==="In Progress")) return "active";
+    if (blocks.every(b=>b.status==="Not Started")) return "upcoming";
+    return "partial";
+  };
+
+  const phaseStatusColor = st => st==="complete"?C.gold:st==="active"?"#82d082":st==="partial"?"#c99a55":C.muted;
+  const phaseStatusDot = st => st==="complete"?"●":st==="active"?"◉":st==="partial"?"◑":"○";
 
   const updateBlock = (id,patch) => onUpdate({...client,productionPipeline:(client.productionPipeline||[]).map(b=>b.id===id?{...b,...patch}:b)});
   const deleteBlock = id => onUpdate({...client,productionPipeline:(client.productionPipeline||[]).filter(b=>b.id!==id)});
   const cycleStatus = (id,cur) => { const idx=PIPELINE_STATUSES_LIST.indexOf(cur); updateBlock(id,{status:PIPELINE_STATUSES_LIST[(idx+1)%3]}); };
 
-  const handleDrop = () => {
-    if(dragIdx===null||dragOverIdx===null||dragIdx===dragOverIdx) { setDragIdx(null);setDragOverIdx(null);return; }
-    const arr = [...pipeline];
-    const [moved] = arr.splice(dragIdx,1);
-    arr.splice(dragOverIdx,0,moved);
-    onUpdate({...client,productionPipeline:arr.map((b,i)=>({...b,order:i}))});
-    setDragIdx(null); setDragOverIdx(null);
-  };
-
   const complete = pipeline.filter(b=>b.status==="Complete").length;
-  const total = pipeline.length;
+
+  // Find current active block label for banner
+  const currentBlock = pipeline.find(b=>b.status==="In Progress") || pipeline.find(b=>b.status==="Not Started");
+  const currentPhaseLabel = PROCESS_PHASES.find(ph=>ph.key===activePhaseKey)?.label;
 
   return (
     <div className="ks-up">
-      <SectionHeading sub="Your book's journey from first session to published manuscript">Book Production Pipeline</SectionHeading>
+      <SectionHeading sub="Your book's journey from first session to published manuscript">Production Pipeline</SectionHeading>
       {isAdmin&&<div style={{ display:"flex",justifyContent:"flex-end",marginBottom:20 }}><button className="btn-ghost" onClick={()=>setEditBlock({})}>+ Add Block</button></div>}
 
-      {total>0&&(
-        <div style={{ display:"flex",alignItems:"center",gap:16,marginBottom:24,padding:"14px 20px",background:"rgba(201,168,76,0.04)",border:`1px solid ${C.goldBorder}` }}>
-          <div style={{ flex:1 }}>
-            <div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.muted,marginBottom:7 }}>Pipeline Progress</div>
-            <ProgressBar value={total>0?Math.round((complete/total)*100):0} trajectory="on-track"/>
+      {/* ── Where We Are banner ── */}
+      {currentBlock&&(
+        <div style={{ marginBottom:32,padding:"18px 24px",background:"rgba(201,168,76,0.06)",border:`1px solid rgba(201,168,76,0.25)`,display:"flex",alignItems:"center",gap:14 }}>
+          <span style={{ color:C.gold,fontSize:22,flexShrink:0 }}>◉</span>
+          <div>
+            <div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:C.gold,marginBottom:5 }}>Where We Are</div>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:20,color:C.text }}>
+              {currentPhaseLabel} — {currentBlock.title}
+              {currentBlock.date&&<span style={{ fontFamily:"'Lato',sans-serif",fontSize:14,color:C.muted,marginLeft:12 }}>{fmtDate(currentBlock.date)}</span>}
+            </div>
           </div>
-          <div style={{ fontFamily:"'Playfair Display',serif",fontSize:22,color:C.gold,flexShrink:0 }}>{complete}/{total}</div>
+          {total>0&&<div style={{ marginLeft:"auto",textAlign:"center",flexShrink:0 }}>
+            <div style={{ fontFamily:"'Playfair Display',serif",fontSize:28,color:C.gold,lineHeight:1 }}>{complete}/{total}</div>
+            <div style={{ fontFamily:"'Lato',sans-serif",fontSize:10,letterSpacing:"0.1em",textTransform:"uppercase",color:C.muted,marginTop:3 }}>Steps</div>
+          </div>}
         </div>
       )}
 
       {pipeline.length===0?<EmptyState message="Your production pipeline will be built here by Mikaela." icon="◈"/>:(
-        <div style={{ position:"relative",paddingLeft:32 }}>
-          {/* Vertical connector */}
-          <div style={{ position:"absolute",left:10,top:20,bottom:20,width:1,background:`linear-gradient(180deg,transparent,rgba(201,168,76,0.3) 10%,rgba(201,168,76,0.3) 90%,transparent)` }}/>
-          {pipeline.map((block,idx)=>{
-            const tc = pipelineTypeColor(block.type);
-            const sc = pipelineStatusColor(block.status);
-            const isDragOver = dragOverIdx===idx;
+        <div>
+          {PROCESS_PHASES.map(ph=>{
+            const blocks = phaseBlocks[ph.key]||[];
+            if (!blocks.length && !isAdmin) return null;
+            const st = getPhaseStatus(ph.key);
+            const stColor = phaseStatusColor(st);
+            const stDot = phaseStatusDot(st);
+            const isOpen = !!expandedPhases[ph.key];
+
             return (
-              <div key={block.id}
-                draggable={isAdmin}
-                onDragStart={()=>setDragIdx(idx)}
-                onDragOver={e=>{e.preventDefault();setDragOverIdx(idx);}}
-                onDragLeave={()=>setDragOverIdx(null)}
-                onDrop={handleDrop}
-                style={{ position:"relative",marginBottom:12,opacity:dragIdx===idx?0.4:1,transition:"opacity 0.15s",borderTop:isDragOver?`2px solid ${C.gold}`:"2px solid transparent" }}>
-                {/* Timeline dot */}
-                <div style={{ position:"absolute",left:-27,top:16,width:12,height:12,borderRadius:"50%",background:sc,border:`2px solid ${C.bg}`,boxShadow:`0 0 0 2px ${sc}44`,zIndex:1 }}/>
-                <div style={{ padding:"14px 18px",background:C.surface,border:`1px solid rgba(255,255,255,0.07)`,transition:"border-color 0.2s",borderLeft:`3px solid ${tc}44` }}
-                  onMouseEnter={e=>e.currentTarget.style.borderColor="rgba(201,168,76,0.18)"}
-                  onMouseLeave={e=>e.currentTarget.style.borderColor="rgba(255,255,255,0.07)"}>
-                  <div style={{ display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12 }}>
-                    <div style={{ flex:1 }}>
-                      <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:5 }}>
-                        <span style={{ color:tc,fontSize:11,fontWeight:700 }}>{pipelineTypeIcon(block.type)}</span>
-                        <span style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.14em",textTransform:"uppercase",color:tc }}>{block.type}</span>
-                        {block.date&&<span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted }}>{fmtDate(block.date)}</span>}
-                      </div>
-                      <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:18,color:C.text,marginBottom:block.notes?6:0 }}>{block.title}</div>
-                      {block.notes&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.dim,fontStyle:"italic",lineHeight:1.55 }}>{block.notes}</div>}
-                    </div>
-                    <div style={{ display:"flex",alignItems:"center",gap:8,flexShrink:0 }}>
-                      {isAdmin?(
-                        <button onClick={()=>cycleStatus(block.id,block.status)} style={{ background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:5,padding:"4px 8px",borderRadius:2,transition:"background 0.15s" }}
-                          onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.05)"}
-                          onMouseLeave={e=>e.currentTarget.style.background="none"}>
-                          <span style={{ color:sc,fontSize:14 }}>{pipelineStatusIcon(block.status)}</span>
-                          <span style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:sc }}>{block.status}</span>
-                        </button>
-                      ):(
-                        <div style={{ display:"flex",alignItems:"center",gap:5 }}>
-                          <span style={{ color:sc,fontSize:14 }}>{pipelineStatusIcon(block.status)}</span>
-                          <span style={{ fontFamily:"'Lato',sans-serif",fontSize:9,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:sc }}>{block.status}</span>
-                        </div>
-                      )}
-                      {isAdmin&&<>
-                        <button className="btn-sm" onClick={()=>setEditBlock(block)}>Edit</button>
-                        <button className="btn-del" onClick={()=>deleteBlock(block.id)}>Del</button>
-                        <span style={{ color:C.muted,fontSize:11,cursor:"grab" }} title="Drag to reorder">⠿</span>
-                      </>}
+              <div key={ph.key} style={{ marginBottom:10 }}>
+                {/* Phase header */}
+                <div onClick={()=>togglePhase(ph.key)}
+                  style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 20px",background:st==="active"?"rgba(130,208,130,0.05)":st==="complete"?"rgba(201,168,76,0.05)":"rgba(255,255,255,0.02)",border:`1px solid ${st==="active"?"rgba(130,208,130,0.2)":st==="complete"?C.goldBorder:"rgba(255,255,255,0.07)"}`,cursor:"pointer",transition:"all 0.18s",userSelect:"none" }}
+                  onMouseEnter={e=>{e.currentTarget.style.borderColor=stColor+"66";}}
+                  onMouseLeave={e=>{e.currentTarget.style.borderColor=st==="active"?"rgba(130,208,130,0.2)":st==="complete"?C.goldBorder:"rgba(255,255,255,0.07)";}}>
+                  <div style={{ display:"flex",alignItems:"center",gap:12 }}>
+                    <span style={{ color:stColor,fontSize:14,flexShrink:0 }} className={st==="active"?"tl-pulse":""}>{stDot}</span>
+                    <div>
+                      <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:20,color:st==="complete"?C.gold:C.text }}>{ph.label}</div>
+                      {!isOpen&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted,marginTop:2,fontStyle:"italic" }}>{ph.desc}</div>}
                     </div>
                   </div>
+                  <div style={{ display:"flex",alignItems:"center",gap:12 }}>
+                    {blocks.length>0&&<span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:stColor,fontWeight:700,letterSpacing:"0.1em" }}>
+                      {blocks.filter(b=>b.status==="Complete").length}/{blocks.length}
+                    </span>}
+                    <span style={{ color:C.muted,fontSize:14,transition:"transform 0.22s",display:"inline-block",transform:isOpen?"rotate(0deg)":"rotate(-90deg)" }}>▾</span>
+                  </div>
                 </div>
+
+                {/* Phase content */}
+                {isOpen&&(
+                  <div style={{ borderLeft:`1px solid rgba(201,168,76,0.2)`,borderRight:`1px solid rgba(255,255,255,0.05)`,borderBottom:`1px solid rgba(255,255,255,0.05)`,padding:"0 0 8px 0" }}>
+                    <div style={{ padding:"12px 20px 0",fontFamily:"'Lato',sans-serif",fontSize:13,color:C.muted,fontStyle:"italic",borderBottom:`1px solid rgba(255,255,255,0.04)`,paddingBottom:12,marginBottom:8 }}>{ph.desc}</div>
+                    {blocks.length===0&&isAdmin&&<div style={{ padding:"12px 20px" }}><button className="btn-ghost" style={{ fontSize:10 }} onClick={()=>setEditBlock({phase:ph.key})}>+ Add Step</button></div>}
+                    {blocks.map((block,bi)=>{
+                      const sc = pipelineStatusColor(block.status);
+                      const si = pipelineStatusIcon(block.status);
+                      const isActive = block.status==="In Progress";
+                      return (
+                        <div key={block.id}
+                          style={{ display:"flex",alignItems:"flex-start",gap:0,marginBottom:0 }}>
+                          {/* Timeline */}
+                          <div style={{ position:"relative",width:44,flexShrink:0,display:"flex",justifyContent:"center" }}>
+                            {bi<blocks.length-1&&<div style={{ position:"absolute",left:"50%",top:24,bottom:-12,width:1,background:"rgba(201,168,76,0.18)",transform:"translateX(-50%)" }}/>}
+                            <div style={{ width:12,height:12,borderRadius:"50%",background:sc,border:`2px solid ${C.bg}`,boxShadow:`0 0 0 3px ${sc}33`,marginTop:20,flexShrink:0,position:"relative",zIndex:1 }} className={isActive?"tl-pulse":""}/>
+                          </div>
+                          <div style={{ flex:1,padding:"14px 16px 14px 0",borderBottom:bi<blocks.length-1?`1px solid rgba(255,255,255,0.04)`:"none" }}
+                            onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.015)"}
+                            onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                            <div style={{ display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:10 }}>
+                              <div style={{ flex:1 }}>
+                                <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:4 }}>
+                                  {block.date&&<span style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted }}>{fmtDate(block.date)}</span>}
+                                  <span style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:pipelineTypeColor(block.type) }}>{block.type}</span>
+                                </div>
+                                <div style={{ fontFamily:"'Cormorant Garamond',serif",fontSize:19,color:block.status==="Complete"?C.muted:C.text,textDecoration:block.status==="Complete"?"line-through":"none",textDecorationColor:"rgba(201,168,76,0.3)",marginBottom:block.notes?5:0 }}>{block.title}</div>
+                                {block.notes&&<div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.dim,fontStyle:"italic",lineHeight:1.55 }}>{block.notes}</div>}
+                              </div>
+                              <div style={{ display:"flex",alignItems:"center",gap:6,flexShrink:0,marginTop:2 }}>
+                                {isAdmin?(
+                                  <button onClick={()=>cycleStatus(block.id,block.status)} style={{ background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:4 }}>
+                                    <span style={{ color:sc,fontSize:13 }}>{si}</span>
+                                    <span style={{ fontFamily:"'Lato',sans-serif",fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:sc }}>{block.status}</span>
+                                  </button>
+                                ):(
+                                  <div style={{ display:"flex",alignItems:"center",gap:4 }}>
+                                    <span style={{ color:sc,fontSize:13 }}>{si}</span>
+                                    <span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:sc }}>{block.status}</span>
+                                  </div>
+                                )}
+                                {isAdmin&&<>
+                                  <button className="btn-sm" onClick={()=>setEditBlock(block)}>Edit</button>
+                                  <button className="btn-del" onClick={()=>deleteBlock(block.id)}>Del</button>
+                                </>}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
       )}
 
-      {editBlock!==null&&<PipelineBlockModal entry={Object.keys(editBlock).length?editBlock:null} onClose={()=>setEditBlock(null)} onSave={b=>{
+      {editBlock!==null&&<PipelineBlockModal entry={Object.keys(editBlock).length&&editBlock.id?editBlock:null} onClose={()=>setEditBlock(null)} onSave={b=>{
         if(b.id) { updateBlock(b.id,b); } else { onUpdate({...client,productionPipeline:[...(client.productionPipeline||[]),{...b,id:uid(),order:(client.productionPipeline||[]).length}]}); }
         setEditBlock(null);
       }}/>}
@@ -2267,6 +2667,7 @@ function BookPipelineView({ client, isAdmin, onUpdate }) {
 // ─────────────────────────────────────────────────────────────
 function BookCoachingView({ client, isAdmin, session, onUpdate }) {
   const [tab,setTab] = useState("drafts");
+
   const drafts = client.coachingDrafts||[];
   const notes = client.sessionNotes||[];
   const assignments = client.writingAssignments||[];
@@ -2482,6 +2883,65 @@ function BookCoachingView({ client, isAdmin, session, onUpdate }) {
             </Modal>
           )}
         </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// EXPLORE IDEAS VIEW (standalone)
+// ─────────────────────────────────────────────────────────────
+function ExploreIdeasView({ client, onUpdate, apiKey }) {
+  const bv = client.brandVoice||{exploreIdeas:[],whiteSpaceCache:null};
+  const ideas = bv.exploreIdeas||[];
+  const [newIdea, setNewIdea] = useState("");
+  const [replyText, setReplyText] = useState({});
+  const [loading, setLoading] = useState(false);
+  const isAdmin = false; // standalone view is always client-facing
+
+  const addIdea = () => {
+    if (!newIdea.trim()) return;
+    const idea = { id:uid(), idea:newIdea.trim(), response:"", hasResponse:false, ts:new Date().toISOString() };
+    onUpdate({...client, brandVoice:{...bv, exploreIdeas:[...(bv.exploreIdeas||[]), idea]}});
+    setNewIdea("");
+  };
+
+  const deleteIdea = id => onUpdate({...client, brandVoice:{...bv, exploreIdeas:(bv.exploreIdeas||[]).filter(i=>i.id!==id)}});
+
+  return (
+    <div className="ks-up">
+      <SectionHeading sub="A space to think out loud — drop an idea, and Mikaela will weigh in">Explore Ideas</SectionHeading>
+
+      {/* Add idea */}
+      <div style={{ marginBottom:32,padding:"20px 24px",background:"rgba(201,168,76,0.04)",border:`1px solid rgba(201,168,76,0.18)` }}>
+        <div style={{ fontFamily:"'Lato',sans-serif",fontSize:13,color:C.muted,marginBottom:12 }}>What's on your mind? A topic you want to explore, a story you keep coming back to, a question you haven't figured out yet.</div>
+        <div style={{ display:"flex",gap:8 }}>
+          <input className="ks-field" value={newIdea} onChange={e=>setNewIdea(e.target.value)} placeholder="Type an idea…" style={{ flex:1 }} onKeyDown={e=>e.key==="Enter"&&addIdea()}/>
+          <button className="btn-gold" onClick={addIdea} disabled={!newIdea.trim()}>Add</button>
+        </div>
+      </div>
+
+      {ideas.length===0?<EmptyState message="Nothing here yet — drop your first idea above." icon="◇"/>:(
+        [...ideas].reverse().map(item=>(
+          <div key={item.id} style={{ marginBottom:18,padding:"18px 22px",background:"rgba(255,255,255,0.03)",border:`1px solid ${item.hasResponse?"rgba(201,168,76,0.25)":"rgba(255,255,255,0.07)"}` }}>
+            <div style={{ display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:10,marginBottom:item.hasResponse?12:0 }}>
+              <div style={{ fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:19,color:C.text,lineHeight:1.6,flex:1 }}>"{item.idea}"</div>
+              <div style={{ display:"flex",alignItems:"center",gap:8,flexShrink:0 }}>
+                <span style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted }}>{fmtDate(item.ts?.split("T")[0])}</span>
+                <button onClick={()=>deleteIdea(item.id)} style={{ background:"none",border:"none",color:"rgba(255,255,255,0.3)",cursor:"pointer",fontSize:14,padding:0 }}>✕</button>
+              </div>
+            </div>
+            {item.hasResponse&&item.response&&(
+              <div style={{ padding:"12px 16px",background:"rgba(201,168,76,0.05)",border:`1px solid rgba(201,168,76,0.15)`,borderLeft:`3px solid ${C.gold}` }}>
+                <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",color:C.gold,marginBottom:7 }}>Mikaela</div>
+                <div style={{ fontFamily:"'Lato',sans-serif",fontSize:15,color:C.dim,lineHeight:1.7 }}>{item.response}</div>
+              </div>
+            )}
+            {!item.hasResponse&&(
+              <div style={{ fontFamily:"'Lato',sans-serif",fontSize:12,color:C.muted,fontStyle:"italic",marginTop:8 }}>Waiting on Mikaela's take…</div>
+            )}
+          </div>
+        ))
       )}
     </div>
   );
@@ -2909,7 +3369,7 @@ function AdminClientEditor({ client, users, onUpdate, activeSection, onSectionCh
 
   // ── Strategy Map ──
   const StrategySection=()=>{
-    const sm=client.strategyMap||{phases:[],goals:[]};
+    const sm=client.strategyMap||{northStar:"",pillars:[],audience:"",phases:[],goals:[]};
     const [goalForm,setGoalForm]=useState({ id:"", label:"", current:0, target:0, unit:"", dueDate:"", phase:"", notes:"" });
     const [editingGoal,setEditingGoal]=useState(null); // id being edited
     const statusOptions=[{v:"complete",l:"Complete"},{v:"active",l:"Active"},{v:"upcoming",l:"Upcoming"},{v:"future",l:"Future"}];
@@ -2926,12 +3386,39 @@ function AdminClientEditor({ client, users, onUpdate, activeSection, onSectionCh
     };
     const deleteGoal=id=>update({strategyMap:{...sm,goals:(sm.goals||[]).filter(x=>x.id!==id)}});
 
+    const addPillar=()=>update({strategyMap:{...sm,pillars:[...(sm.pillars||[]),{id:uid(),name:"New Pillar",description:"",color:"#c9a84c"}]}});
+    const updatePillar=(i,patch)=>update({strategyMap:{...sm,pillars:(sm.pillars||[]).map((p,j)=>j===i?{...p,...patch}:p)}});
+    const deletePillar=i=>update({strategyMap:{...sm,pillars:(sm.pillars||[]).filter((_,j)=>j!==i)}});
+
     return (
       <div>
-        <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,marginBottom:20,fontStyle:"italic" }}>Set each phase status, then add measurable goals with current + target numbers.</div>
+        <div style={{ fontFamily:"'Lato',sans-serif",fontSize:11,color:C.muted,marginBottom:20,fontStyle:"italic" }}>Set the north star, content pillars, audience, phases, and goals.</div>
 
-        {/* Phase status editors */}
-        <Label>Phases</Label>
+        {/* North Star */}
+        <FormRow label="North Star Statement" hint="One sentence — the thing everything else points back to.">
+          <textarea className="ks-field" value={sm.northStar||""} onChange={e=>update({strategyMap:{...sm,northStar:e.target.value}})} placeholder="I want to be the…" style={{ minHeight:60 }}/>
+        </FormRow>
+
+        {/* Audience */}
+        <FormRow label="Audience" hint="Who they're writing for, in plain language.">
+          <textarea className="ks-field" value={sm.audience||""} onChange={e=>update({strategyMap:{...sm,audience:e.target.value}})} placeholder="Senior leaders at…" style={{ minHeight:60 }}/>
+        </FormRow>
+
+        {/* Content Pillars */}
+        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12 }}>
+          <Label>Content Pillars</Label>
+          <button className="btn-ghost" onClick={addPillar} style={{ fontSize:10 }}>+ Add Pillar</button>
+        </div>
+        {(sm.pillars||[]).map((p,i)=>(
+          <div key={p.id} style={{ display:"grid",gridTemplateColumns:"1fr 1fr auto",gap:8,marginBottom:8 }}>
+            <input className="ks-field" value={p.name} onChange={e=>updatePillar(i,{name:e.target.value})} placeholder="Pillar name"/>
+            <input className="ks-field" value={p.description} onChange={e=>updatePillar(i,{description:e.target.value})} placeholder="One-line description…"/>
+            <button className="btn-del" onClick={()=>deletePillar(i)}>Del</button>
+          </div>
+        ))}
+
+        <GoldRule my={20}/>
+        <Label>Journey Phases</Label>
         {sm.phases?.map((phase,i)=>(
           <div key={phase.id} style={{ display:"grid",gridTemplateColumns:"1fr 1fr auto",gap:10,marginBottom:8 }}>
             <input className="ks-field" value={phase.name} onChange={e=>update({strategyMap:{...sm,phases:sm.phases.map((p,j)=>j===i?{...p,name:e.target.value}:p)}})} placeholder="Phase name"/>
@@ -3269,18 +3756,17 @@ function ClientDashboard({ client, session, onLogout, onUpdate, apiKey }) {
     ]},
     ...(branding?[{ label:"Content",items:[
       { key:"content",label:"Content",active:view==="content",onClick:()=>setView("content"),badge:pendingApprovals||null },
-      { key:"performance",label:"Performance",active:view==="performance",onClick:()=>setView("performance") },
-      ...(hasAuthority(client.tier)?[{ key:"publications",label:"In the Press",active:view==="publications",onClick:()=>setView("publications") }]:[]),
+      { key:"momentum",label:"Your Momentum",active:view==="momentum",onClick:()=>setView("momentum") },
+      ...(hasAuthority(client.tier)?[{ key:"results",label:"Results",active:view==="results",onClick:()=>setView("results") }]:[]),
     ]}]:[]),
     ...(branding&&hasAuthority(client.tier)?[{ label:"Brand",items:[
-      { key:"milestones",label:"Milestones",active:view==="milestones",onClick:()=>setView("milestones") },
+      { key:"progress",label:"Progress",active:view==="progress",onClick:()=>setView("progress") },
       { key:"strategy",label:"Strategy Map",active:view==="strategy",onClick:()=>setView("strategy") },
-      ...(influence?[{ key:"ai",label:"AI Visibility",active:view==="ai",onClick:()=>setView("ai") }]:[]),
-      { key:"timeline",label:"Results Timeline",active:view==="timeline",onClick:()=>setView("timeline") },
-      { key:"voice",label:"Brand Voice",active:view==="voice",onClick:()=>setView("voice"),badge:unansweredIdeas||null },
+      ...(influence?[{ key:"ai",label:"Search & Discovery",active:view==="ai",onClick:()=>setView("ai") }]:[]),
+      { key:"explore",label:"Explore Ideas",active:view==="explore",onClick:()=>setView("explore"),badge:unansweredIdeas||null },
     ]}]:[]),
     ...(branding&&!hasAuthority(client.tier)?[{ label:"Brand",items:[
-      { key:"voice",label:"Brand Voice",active:view==="voice",onClick:()=>setView("voice"),badge:unansweredIdeas||null },
+      { key:"explore",label:"Explore Ideas",active:view==="explore",onClick:()=>setView("explore"),badge:unansweredIdeas||null },
     ]}]:[]),
     ...(manuscript?[{ label:"Manuscript",items:[
       { key:"manuscript",label:"Chapters",active:view==="manuscript",onClick:()=>setView("manuscript") },
@@ -3300,17 +3786,15 @@ function ClientDashboard({ client, session, onLogout, onUpdate, apiKey }) {
       case "messages": return <DirectMessagesView client={client} session={session} onUpdate={onUpdate}/>;
       case "calendar": return <CalendarView {...p}/>;
       case "content": return <ContentView {...p}/>;
-      case "performance": return <PerformanceView client={client}/>;
-      case "publications": return <InThePressView client={client}/>;
-      case "milestones": return <MilestonesView client={client} isAdmin={false} onUpdate={onUpdate}/>;
-      case "strategy": return <StrategyMapView client={client}/>;
+      case "momentum": return <PerformanceView client={client}/>;
+      case "results": return <ResultsView client={client}/>;
+      case "progress": return <ProgressView client={client} isAdmin={false} onUpdate={onUpdate}/>;
+      case "strategy": return <StrategyMapView client={client} isAdmin={false} onUpdate={onUpdate}/>;
       case "ai": return <AIVisibilityView client={client}/>;
       case "manuscript": return <ManuscriptView client={client}/>;
       case "pipeline": return <BookPipelineView client={client} isAdmin={false} onUpdate={onUpdate}/>;
       case "coaching": return <BookCoachingView client={client} isAdmin={false} session={session} onUpdate={onUpdate}/>;
-      case "voice": return <BrandVoiceView {...p}/>;
-      case "playbook": return <PressGuidanceView client={client}/>;
-      case "timeline": return <TimelineView client={client}/>;
+      case "explore": return <ExploreIdeasView client={client} onUpdate={onUpdate} apiKey={apiKey}/>;
       case "documents": return <DocumentsView {...p}/>;
       case "preferences": return <ClientSettingsView client={client} session={session} onUpdate={onUpdate}/>;
       default: return null;
